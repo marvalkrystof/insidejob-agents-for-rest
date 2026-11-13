@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type ServerResponse } from "node:http";
 import { storedDigestSchema } from "../digest/schema";
 import { loadEnvFileIfPresent, readOptionalEnv } from "../libs/env.utils";
+import { describeError } from "../libs/error.utils";
 import { DIGEST_PATH } from "../pipeline/paths";
 import { loadProfile } from "../profile";
 import { renderDigestPage, renderEmptyPage } from "./page";
@@ -44,7 +45,7 @@ const main = async (): Promise<void> => {
       }
       send(response, 200, "text/html", renderDigestPage(storedDigestSchema.parse(JSON.parse(raw)), profile.name));
     })().catch((error: unknown) => {
-      send(response, 500, "text/plain", error instanceof Error ? error.message : String(error));
+      send(response, 500, "text/plain", describeError(error));
     });
   });
 

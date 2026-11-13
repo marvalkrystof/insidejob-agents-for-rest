@@ -9,6 +9,7 @@ import type { Collector, CollectorContext } from "../collectors/types";
 import { collectMunicipalBoard } from "../collectors/uredni-deska";
 import { itemSchema, type Item, type SourceId } from "../item";
 import { loadEnvFileIfPresent } from "../libs/env.utils";
+import { describeError } from "../libs/error.utils";
 import { toPragueIso } from "../libs/time.utils";
 import { loadProfile } from "../profile";
 import { toPrettyJson, writeCollectedItems } from "./items-store";
@@ -61,7 +62,7 @@ const collectSource = async (
       firstIssue: firstFailure?.error?.issues[0]?.message,
     };
   } catch (error) {
-    return { source, items: [], invalidCount: 0, error: error instanceof Error ? error.message : String(error) };
+    return { source, items: [], invalidCount: 0, error: describeError(error) };
   }
 };
 

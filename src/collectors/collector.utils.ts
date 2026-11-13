@@ -1,4 +1,5 @@
 import { buildItem, type Item } from "../item";
+import { describeError } from "../libs/error.utils";
 import { firstOffer, formatPrice, type SchemaEvent } from "../libs/jsonld.utils";
 import { toPragueIso } from "../libs/time.utils";
 
@@ -16,7 +17,7 @@ export const mapRecordsSafely = <TRecord>(
       return item ? [item] : [];
     } catch (error) {
       skippedCount += 1;
-      firstErrorMessage ||= error instanceof Error ? error.message : String(error);
+      firstErrorMessage ||= describeError(error);
       return [];
     }
   });

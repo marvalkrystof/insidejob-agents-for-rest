@@ -2,6 +2,7 @@ import type { BaseMessage } from "@langchain/core/messages";
 import type { InteropZodType } from "@langchain/core/utils/types";
 import { ChatOpenAI } from "@langchain/openai";
 import { readOptionalEnv, requireEnv } from "../libs/env.utils";
+import { describeError } from "../libs/error.utils";
 
 export const FEATHERLESS_BASE_URL = "https://api.featherless.ai/v1";
 export const DEFAULT_FEATHERLESS_MODEL = "moonshotai/Kimi-K2-Instruct-0905";
@@ -37,7 +38,7 @@ export const invokeStructured = async <TOutput extends Record<string, unknown>>(
   try {
     return await model.withStructuredOutput(schema, { method: "functionCalling", name }).invoke(messages);
   } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
+    const reason = describeError(error);
     console.warn(`[llm] ${name}: tool-calling output failed (${reason.slice(0, 200)}), retrying in JSON mode`);
     return model.withStructuredOutput(schema, { method: "jsonMode", name }).invoke(messages);
   }

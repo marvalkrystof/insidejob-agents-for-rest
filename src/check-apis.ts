@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { loadEnvFileIfPresent, readOptionalEnv } from "./libs/env.utils";
+import { describeError } from "./libs/error.utils";
 import { fetchJson } from "./libs/http.utils";
 import { FEATHERLESS_BASE_URL, resolveFeatherlessModel } from "./llm/featherless";
 import { loadProfile, type Profile } from "./profile";
@@ -170,7 +171,7 @@ const runCheck = async (check: ApiCheck, profile: Profile): Promise<CheckResult>
   try {
     return { name: check.name, status: "OK", detail: await check.run(secret, profile) };
   } catch (error) {
-    return { name: check.name, status: "FAIL", detail: error instanceof Error ? error.message : String(error) };
+    return { name: check.name, status: "FAIL", detail: describeError(error) };
   }
 };
 

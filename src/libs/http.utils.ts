@@ -1,3 +1,5 @@
+import { describeError } from "./error.utils";
+
 const USER_AGENT = "Domovnik/0.1 (hackathon prototype)";
 const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_ATTEMPTS = 2;
@@ -34,7 +36,7 @@ export const fetchText = async (url: string, options: RequestOptions = {}): Prom
       response = await requestOnce(url, options);
     } catch (error) {
       if (isLastAttempt) {
-        const reason = error instanceof Error ? error.message : String(error);
+        const reason = describeError(error);
         throw new Error(`${method} ${redactUrl(url)} failed: ${reason}`);
       }
       continue;
