@@ -3,3 +3,8 @@
 !.env.example
 .claude/settings.local.json
 .spikes/
+HANDOFF.md
+node_modules/
+data/
+fixtures/
+.yarn/install-state.gz

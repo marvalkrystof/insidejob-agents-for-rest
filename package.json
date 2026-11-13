@@ -1,0 +1,30 @@
+{
+  "name": "domovnik",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@4.10.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check:apis": "tsx src/check-apis.ts",
+    "collect": "tsx src/pipeline/collect.ts",
+    "digest": "tsx src/digest/run.ts",
+    "web": "tsx src/web/server.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.4.0",
+    "@langchain/langgraph": "^1.7.4",
+    "@langchain/openai": "^1.8.4",
+    "cheerio": "^1.2.0",
+    "fast-xml-parser": "^5.12.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
