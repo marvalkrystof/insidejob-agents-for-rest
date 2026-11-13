@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Fake Reels</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
+  nav { position: fixed; left: 0; top: 0; bottom: 0; width: 72px; background: #111; }
+  #feed { position: absolute; left: 72px; right: 0; top: 0; bottom: 0; overflow-y: scroll; scroll-snap-type: y mandatory; }
+  .reel { height: 100vh; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .player { position: relative; height: 92vh; aspect-ratio: 9 / 16; }
+  video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .info { position: absolute; left: 12px; right: 12px; bottom: 16px; }
+  .info a { color: #fff; font-weight: bold; text-decoration: none; }
+  .actions { display: flex; flex-direction: column; gap: 18px; }
+  [role="button"] { cursor: pointer; width: 40px; height: 40px; display: grid; place-items: center; }
+  svg { width: 28px; height: 28px; fill: #fff; }
+  [role="dialog"] { position: fixed; inset: 30% 35%; background: #262626; border-radius: 12px; display: flex; flex-direction: column; }
+  [role="dialog"] button { flex: 1; background: none; color: #fff; border: 0; border-bottom: 1px solid #444; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+<nav></nav>
+<main id="feed"></main>
+<!-- Šipky vpravo jako na instagram.com/reels ("Reels navigation controls"). -->
+<div role="toolbar" aria-label="Reels navigation controls" style="position:fixed;right:24px;top:40%;display:flex;flex-direction:column;gap:16px">
+  <div role="button" aria-label="Navigate to previous Reel" id="prev">▲</div>
+  <div role="button" aria-label="Navigate to next Reel" id="next">▼</div>
+</div>
+<script>
+// Napodobuje strukturu instagram.com/reels: video, odkaz na autora, popisek,
+// odkaz na audio a tlačítka s aria-label na <svg> uvnitř div[role=button].
+const REELS = [
+  ['carspotter.cz', 'Nové Porsche 911 GT3 RS na Nordschleife 🔥 #porsche #auta', 'Engine sounds'],
+  ['bakingwithanna', 'Nejlepší banánový chlebník za 10 minut #recept', 'Lofi beats'],
+  ['f1fanpage', 'Verstappen overtake in Monza, motorsport at its best #f1 #motorsport', 'Original audio'],
+  ['catsofprague', 'Kočka vs. okurka 😂', 'Funny sound'],
+  ['supercarblondie', 'Ferrari SF90 vs Lamborghini Revuelto drag race #cars', 'Hype track'],
+  ['gymbro', 'Leg day routine for beginners #fitness', 'Workout mix'],
+  ['dailydriver', 'Škoda Octavia RS po 200 000 km, stojí to za to? #auta #recenze', 'Original audio'],
+  ['travelwithme', 'Hidden beaches in Croatia #travel', 'Summer vibes'],
+  ['rallyczech', 'Barum rallye Zlín, skok na Pindule #rallye #motorsport', 'Crowd noise'],
+  ['memesdaily', 'When the wifi drops during a meeting', 'Oh no'],
+];
+const like = '<svg aria-label="To se mi líbí" viewBox="0 0 24 24"><path d="M12 21 3 12a5 5 0 0 1 9-6 5 5 0 0 1 9 6z"/></svg>';
+const unlike = '<svg aria-label="Už se mi nelíbí" viewBox="0 0 24 24" style="fill:#e33"><path d="M12 21 3 12a5 5 0 0 1 9-6 5 5 0 0 1 9 6z"/></svg>';
+const save = '<svg aria-label="Uložit" viewBox="0 0 24 24"><path d="M5 3h14v18l-7-5-7 5z"/></svg>';
+const unsave = '<svg aria-label="Odebrat" viewBox="0 0 24 24" style="fill:#fc0"><path d="M5 3h14v18l-7-5-7 5z"/></svg>';
+const more = '<svg aria-label="Další" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+
+// Události ukládáme i do DOM: Patchright spouští evaluate v izolovaném světě,
+// takže window.* ze stránky nevidí, DOM ano.
+window.__events = [];
+const _push = window.__events.push.bind(window.__events);
+window.__events.push = (e) => { const r = _push(e); document.body.dataset.events = JSON.stringify(window.__events); return r; };
+const feed = document.getElementById('feed');
+// ?n=200 = delší feed (seznam se opakuje), ?start=3 = začít od 4. reelu (otevření z Explore).
+const params = new URLSearchParams(location.search);
+const N = Number(params.get('n') ?? REELS.length);
+Array.from({ length: N }, (_, i) => [...REELS[i % REELS.length], i]).forEach(([author, caption, audio, i]) => {
+  const el = document.createElement('div');
+  el.className = 'reel';
+  el.innerHTML = `
+    <div class="player">
+      <video src="clip-${(i % 4) + 1}.webm" muted loop playsinline preload="${i < 6 ? 'auto' : 'metadata'}"></video>
+      <div class="info">
+        <div><a href="/${author}/reels/" role="link">${author}</a> <div role="button" style="display:inline;width:auto">Sledovat</div></div>
+        <div role="button">${caption}</div>
+        <div><a href="/reels/audio/${i}/">${audio}</a></div>
+      </div>
+    </div>
+    <div class="actions">
+      <div role="button" data-act="like">${like}</div>
+      <div role="button" data-act="save">${save}</div>
+      <div role="button" data-act="more">${more}</div>
+    </div>
+    <a href="/reel/FAKE${i}/" style="display:none">link</a>`;
+  feed.appendChild(el);
+  const v = el.querySelector('video');
+  // MediaRecorder WebM nemá v hlavičce délku (duration = Infinity). Známý trik:
+  // skočit na konec, prohlížeč délku spočítá, pak zpátky na začátek.
+  v.addEventListener('loadedmetadata', () => {
+    if (v.duration === Infinity) {
+      v.currentTime = 1e101;
+      v.addEventListener('durationchange', () => { v.currentTime = 0; }, { once: true });
+    }
+  }, { once: true });
+  el.querySelector('[data-act=like]').onclick = (e) => {
+    const b = e.currentTarget; const liked = b.querySelector('svg').getAttribute('aria-label') !== 'To se mi líbí';
+    b.innerHTML = liked ? like : unlike; __events.push({ i, act: liked ? 'unlike' : 'like' });
+  };
+  el.querySelector('[data-act=save]').onclick = (e) => {
+    const b = e.currentTarget; const saved = b.querySelector('svg').getAttribute('aria-label') !== 'Uložit';
+    b.innerHTML = saved ? save : unsave; __events.push({ i, act: saved ? 'unsave' : 'save' });
+  };
+  el.querySelector('[data-act=more]').onclick = () => {
+    const d = document.createElement('div');
+    d.setAttribute('role', 'dialog');
+    d.innerHTML = '<button>Nahlásit</button><button>Nemám zájem</button><button>Zrušit</button>';
+    d.querySelectorAll('button').forEach((btn) => btn.onclick = () => {
+      if (btn.textContent === 'Nemám zájem') __events.push({ i, act: 'notInterested' });
+      d.remove();
+    });
+    document.body.appendChild(d);
+    document.addEventListener('keydown', (k) => k.key === 'Escape' && d.remove(), { once: true });
+  };
+  el.querySelector('.info [role=button]').onclick = (e) => {
+    e.currentTarget.textContent = 'Sleduji'; __events.push({ i, act: 'follow' });
+  };
+});
+
+document.getElementById('next').onclick = () => feed.scrollBy({ top: feed.clientHeight, behavior: 'smooth' });
+document.getElementById('prev').onclick = () => feed.scrollBy({ top: -feed.clientHeight, behavior: 'smooth' });
+
+// Odkazy jako na Instagramu, ale lokálně: autor → profile.html, ostatní nikam.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="/"]');
+  if (!a) return;
+  e.preventDefault();
+  const m = a.getAttribute('href').match(/^\/([\w.]+)\/(?:reels\/)?$/);
+  if (m && m[1] !== 'reels') location.href = `profile.html?u=${encodeURIComponent(m[1])}`;
+});
+const start = Number(params.get('start') ?? 0);
+if (start) requestAnimationFrame(() => { feed.scrollTop = start * feed.clientHeight; });
+
+// Jako Instagram: přehrává se jen reel, který je na obrazovce.
+const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+  const v = en.target.querySelector('video');
+  if (en.intersectionRatio > 0.6) { v.play().catch(() => {}); __events.push({ i: [...feed.children].indexOf(en.target), act: 'view' }); }
+  else v.pause();
+}), { threshold: [0, 0.6, 1] });
+feed.querySelectorAll('.reel').forEach((r) => io.observe(r));
+document.addEventListener('keydown', (k) => {
+  if (k.key === 'ArrowDown') feed.scrollBy({ top: innerHeight, behavior: 'smooth' });
+});
+</script>
+</body>
+</html>

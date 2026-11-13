@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Fake profil</title>
+<style>
+  body { margin: 0; background: #000; color: #fff; font-family: sans-serif; }
+  header { margin: 24px 96px; display: flex; gap: 16px; align-items: center; }
+  [role=button] { background: #0095f6; padding: 6px 16px; border-radius: 8px; cursor: pointer; }
+  main { margin-left: 96px; display: grid; grid-template-columns: repeat(3, 200px); gap: 4px; }
+  main a { display: block; width: 200px; height: 260px; background: #333; color: #fff; }
+</style>
+</head>
+<body>
+<header><h2 id="name"></h2><div role="button" id="follow">Follow</div></header>
+<main id="grid"></main>
+<script>
+// Napodobenina profilu: tlačítko Follow / Following a tři reels.
+const u = new URLSearchParams(location.search).get('u') ?? 'someone';
+document.getElementById('name').textContent = u;
+const btn = document.getElementById('follow');
+btn.onclick = () => { btn.textContent = btn.textContent === 'Follow' ? 'Following' : 'Follow'; document.body.dataset.followed = btn.textContent === 'Following' ? u : ''; };
+const grid = document.getElementById('grid');
+for (let i = 0; i < 3; i++) {
+  const a = document.createElement('a');
+  a.dataset.tile = '';
+  a.href = `reels.html?n=200&start=${i * 2}`;
+  a.textContent = `${u} reel ${i + 1}`;
+  grid.appendChild(a);
+}
+</script>
+</body>
+</html>

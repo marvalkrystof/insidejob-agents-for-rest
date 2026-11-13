@@ -1,0 +1,51 @@
+{
+  "goal_id": "auta-live-2026-11-13",
+  "target_topic": "auta",
+  "target_description": "osobní a sportovní auta, superauta, recenze aut, tuning, detailing, motorsport, F1, rallye, drift, veteráni",
+  "subtopics": [
+    "supercars",
+    "car review",
+    "recenze aut",
+    "motorsport",
+    "drift",
+    "porsche",
+    "ferrari",
+    "bmw",
+    "f1",
+    "rallye",
+    "tuning",
+    "cars",
+    "auta"
+  ],
+  "old_topics": [],
+  "languages": [
+    "cs",
+    "en"
+  ],
+  "account_type": "real",
+  "verify_persistence": false,
+  "on_success": "stop",
+  "limits": {
+    "max_cycles": 1,
+    "max_active_minutes": null,
+    "max_days": null,
+    "max_cost_usd": 2,
+    "hard_stop_at": null
+  },
+  "seeds_enabled": true,
+  "active_hours": {
+    "from": "08:00",
+    "to": "23:00",
+    "timezone": "Europe/Prague"
+  },
+  "reward": {
+    "like_p": [
+      0.6,
+      0.9
+    ],
+    "save_p": [
+      0.3,
+      0.5
+    ]
+  }
+}

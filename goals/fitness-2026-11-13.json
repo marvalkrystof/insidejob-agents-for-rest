@@ -1,0 +1,18 @@
+{
+  "goal_id": "fitness-2026-11-13",
+  "target_topic": "fitness",
+  "target_description": "fitness a cvičení: posilovna, silový trénink, kalistenika, shyby, kliky, běh, HIIT, jóga, mobilita, protahování, tréninkové plány, technika cviků",
+  "subtopics": ["workout", "gym", "calisthenics", "pull ups", "strength training", "home workout", "yoga", "cvičení", "posilovna", "fitness"],
+  "old_topics": [
+    { "topic": "auta", "description": "auta, superauta, recenze aut, motorsport, F1, rallye, drift, tuning" }
+  ],
+  "languages": ["cs", "en"],
+  "account_type": "real",
+  "verify_persistence": false,
+  "on_success": "stop",
+  "limits": { "max_cycles": 3, "max_active_minutes": null, "max_days": null, "max_cost_usd": 2, "hard_stop_at": null },
+  "seeds_enabled": true,
+  "active_hours": { "from": "08:00", "to": "23:00", "timezone": "Europe/Prague" },
+  "reward": { "like_p": [0.6, 0.9], "save_p": [0.3, 0.5] },
+  "run": { "time_scale": 0.15, "stop_in_minutes": 40 }
+}

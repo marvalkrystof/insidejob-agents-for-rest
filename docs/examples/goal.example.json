@@ -1,0 +1,54 @@
+{
+  "goal_id": "cars-2026-11-13",
+  "target_topic": "auta",
+  "target_description": "osobní a sportovní auta, recenze, tuning, detailing, motorsport, drift, veteráni",
+  "subtopics": [
+    "recenze aut",
+    "supercars",
+    "car detailing",
+    "drift",
+    "veteráni"
+  ],
+  "old_topics": [
+    {
+      "topic": "vaření",
+      "description": "recepty, vaření, pečení, food vlogy, restaurace"
+    }
+  ],
+  "languages": [
+    "cs",
+    "en"
+  ],
+  "mode": "safe",
+  "account_type": "real",
+  "target_alignment": 0.6,
+  "min_lift": 0.2,
+  "verify_persistence": true,
+  "on_success": "maintain",
+  "limits": {
+    "max_cycles": null,
+    "max_active_minutes": null,
+    "max_days": null,
+    "max_cost_usd": null,
+    "hard_stop_at": null
+  },
+  "control_account_id": null,
+  "dm_share_recipient": null,
+  "seeds_enabled": true,
+  "reset_recommendations": false,
+  "active_hours": {
+    "from": "08:00",
+    "to": "23:00",
+    "timezone": "Europe/Prague"
+  },
+  "reward": {
+    "like_p": [
+      0.6,
+      0.9
+    ],
+    "save_p": [
+      0.3,
+      0.5
+    ]
+  }
+}
