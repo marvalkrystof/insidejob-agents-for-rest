@@ -175,7 +175,7 @@ const slug = (s: string) =>
 /** Uloží nový cíl z formuláře do goals/<goal_id>.json (WORKFLOW.md, sekce 3). */
 function createGoal(input: Json): { goal: GoalConfig; file: string } {
   const topic = String(input.target_topic ?? '').trim();
-  if (!topic) throw new HttpError(400, 'Chybí téma, které chceš ve feedu vidět víc.');
+  if (!topic) throw new HttpError(400, 'Missing the topic you want to see more of.');
   const list = (v: unknown) => (Array.isArray(v) ? v.map(String) : String(v ?? '').split(',')).map((x) => x.trim()).filter(Boolean);
   const day = new Date().toISOString().slice(0, 10);
   const taken = new Set(listGoals().map((g) => g.goal_id));
@@ -347,15 +347,15 @@ function pushOut(text: string) {
 }
 
 function startRun(body: Json) {
-  if (proc.child) throw new HttpError(409, 'Agent už běží. Nejdřív ho zastav.');
+  if (proc.child) throw new HttpError(409, 'The agent is already running. Stop it first.');
   // Test na napodobenině má vlastní profil (.profile-test), ale sdílí data-test a log
   // fixture-test s jiným testem; agent sdílí profil .profile s během z terminálu.
   const ext = externalRun();
   if (body.fixture === true && ext.goals.includes(FIXTURE_GOAL)) {
-    throw new HttpError(409, 'Z terminálu už běží jiný test na napodobenině (sdílí data-test/). Počkej, až skončí.');
+    throw new HttpError(409, 'Another test on the local copy is already running from the terminal (it shares data-test/). Wait until it finishes.');
   }
   if (body.fixture !== true && ext.blocking) {
-    throw new HttpError(409, `Právě běží session spuštěná z terminálu (${ext.goals.join(', ')}), prohlížeč s profilem je obsazený. Zastav ji tam, nebo počkej, až skončí.`);
+    throw new HttpError(409, `A session started from the terminal is running (${ext.goals.join(', ')}) and is using the browser profile. Stop it there or wait until it finishes.`);
   }
 
   let args: string[];
@@ -375,12 +375,12 @@ function startRun(body: Json) {
     } else {
       goalId = String(body.goal_id ?? '');
       const g = goalFiles().get(goalId);
-      if (!g) throw new HttpError(404, `Cíl ${goalId} nemá soubor v goals/. Vytvoř nový cíl.`);
+      if (!g) throw new HttpError(404, `Goal ${goalId} has no file in goals/. Create a new goal.`);
       file = g.file;
       // Skončený cíl agent hned ukončí (start → end), což v aplikaci vypadá jako pád.
       const gs = stateFor(goalId)?.gs;
       if (gs?.terminal && gs.status !== 'maintaining') {
-        throw new HttpError(409, `Cíl ${goalId} už skončil (${String(gs.terminal)}). Vyber jiný cíl, nebo vytvoř nový.`);
+        throw new HttpError(409, `Goal ${goalId} has already finished (${String(gs.terminal)}). Pick another goal or create a new one.`);
       }
     }
     args = ['--env-file-if-exists=.env', 'src/main.ts', '--goal', file, body.live === true ? '--live' : '--dry-run'];
@@ -394,7 +394,7 @@ function startRun(body: Json) {
   pushOut(`$ node ${args.slice(1).join(' ')}`);
   child.stdout?.setEncoding('utf8').on('data', pushOut);
   child.stderr?.setEncoding('utf8').on('data', pushOut);
-  child.on('error', (err) => pushOut(`Nepodařilo se spustit agenta: ${err.message}`));
+  child.on('error', (err) => pushOut(`Could not start the agent: ${err.message}`));
   child.on('exit', (code, signal) => {
     const startedAt = proc.startedAt ?? 0;
     for (const f of listFiles(LOGS, /^steps-.+\.jsonl$/)) {
@@ -403,7 +403,7 @@ function startRun(body: Json) {
     proc.child = null;
     proc.stopping = false;
     proc.exit = { code, signal, at: Date.now() };
-    pushOut(`— agent skončil (${signal ?? `kód ${code}`})`);
+    pushOut(`— agent finished (${signal ?? `code ${code}`})`);
     broadcast('proc', procView());
     broadcast('goals', { goals: listGoals() });
   });
@@ -414,7 +414,7 @@ function startRun(body: Json) {
 
 /** První Stop = Ctrl+C (agent dokončí akci a zapíše stav), druhý = okamžité ukončení. */
 function stopRun() {
-  if (!proc.child) throw new HttpError(409, 'Agent neběží.');
+  if (!proc.child) throw new HttpError(409, 'The agent is not running.');
   if (proc.stopping) {
     proc.child.kill('SIGINT');
     setTimeout(() => proc.child?.kill('SIGKILL'), 5000).unref();
@@ -536,16 +536,16 @@ async function readBody(req: IncomingMessage): Promise<Json> {
   let text = '';
   for await (const chunk of req) {
     text += chunk;
-    if (text.length > 100_000) throw new HttpError(413, 'Příliš velký požadavek.');
+    if (text.length > 100_000) throw new HttpError(413, 'Request too large.');
   }
-  try { return text ? (JSON.parse(text) as Json) : {}; } catch { throw new HttpError(400, 'Neplatný JSON.'); }
+  try { return text ? (JSON.parse(text) as Json) : {}; } catch { throw new HttpError(400, 'Invalid JSON.'); }
 }
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${HOST}`);
   try {
     if (req.method === 'POST') {
-      if (req.headers[CSRF_HEADER] !== '1') throw new HttpError(403, 'Chybí hlavička aplikace.');
+      if (req.headers[CSRF_HEADER] !== '1') throw new HttpError(403, 'Missing app header.');
       const body = await readBody(req);
       if (url.pathname === '/api/run') return json(res, 200, startRun(body));
       if (url.pathname === '/api/compile') {
@@ -561,7 +561,7 @@ const server = createServer(async (req, res) => {
         return json(res, 200, { goal_id: goal.goal_id, file: basename(file) });
       }
       if (url.pathname === '/api/stop') { stopRun(); return json(res, 200, { ok: true }); }
-      throw new HttpError(404, 'Neznámá akce.');
+      throw new HttpError(404, 'Unknown action.');
     }
 
     if (url.pathname === '/api/stream') {
@@ -586,7 +586,7 @@ const server = createServer(async (req, res) => {
     // Statické soubory panelu
     const name = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
     const file = join(PUBLIC, name);
-    if (!file.startsWith(PUBLIC + '/') || !existsSync(file) || !TYPES[extname(file)]) throw new HttpError(404, 'Nenalezeno.');
+    if (!file.startsWith(PUBLIC + '/') || !existsSync(file) || !TYPES[extname(file)]) throw new HttpError(404, 'Not found.');
     res.writeHead(200, { 'content-type': TYPES[extname(file)]!, 'cache-control': 'no-store' });
     res.end(readFileSync(file));
   } catch (err) {
@@ -597,8 +597,8 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Feed Trainer běží na http://localhost:${PORT}`);
-  console.log(`Featherless: ${process.env.FEATHERLESS_API_KEY ? 'ano' : 'ne (jen klíčová slova)'} · Apify: ${process.env.APIFY_TOKEN ? 'ano' : 'ne'}`);
+  console.log(`Feed Trainer running at http://localhost:${PORT}`);
+  console.log(`Featherless: ${process.env.FEATHERLESS_API_KEY ? 'yes' : 'no (keywords only)'} · Apify: ${process.env.APIFY_TOKEN ? 'yes' : 'no'}`);
 });
 
 // Ctrl+C na serveru zastaví i agenta (dostane SIGINT od terminálu, tady jen počkáme).

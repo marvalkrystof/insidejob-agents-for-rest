@@ -1,0 +1,52 @@
+{
+  "goal_id": "vareni-2026-11-13",
+  "target_topic": "vaření",
+  "target_description": "snadné všednodenní recepty, těstoviny a italská kuchyně, asijské street food, meal prep, pečení chleba, dezerty, práce s nožem, kuchyňské tipy, domácí vaření, recepty",
+  "subtopics": [
+    "easy weeknight recipes",
+    "pasta recipes",
+    "italian cooking",
+    "asian street food",
+    "meal prep",
+    "baking bread",
+    "desserts",
+    "knife skills",
+    "kitchen tips",
+    "rychlé recepty",
+    "těstoviny",
+    "pečení"
+  ],
+  "old_topics": [
+    {
+      "topic": "auta",
+      "description": "supercars, motorsport, car videos"
+    },
+    {
+      "topic": "fitness",
+      "description": "gym workouts, calisthenics, training"
+    }
+  ],
+  "languages": [
+    "cs",
+    "en"
+  ],
+  "account_type": "real",
+  "mode": "safe",
+  "target_alignment": 0.6,
+  "verify_persistence": false,
+  "on_success": "stop",
+  "seeds_enabled": true,
+  "limits": {
+    "max_cycles": 10,
+    "max_active_minutes": 50,
+    "max_days": 7,
+    "max_cost_usd": 5,
+    "hard_stop_at": "2026-11-13T18:01:00.000Z"
+  },
+  "active_hours": {
+    "from": "08:00",
+    "to": "23:00",
+    "timezone": "Europe/Prague"
+  },
+  "source_query": "I want a lot more home cooking content in my Reels feed: easy weeknight recipes,\npasta and Italian cooking, Asian street food, meal prep, baking bread and desserts,\nknife skills and kitchen tips. English or Czech content is fine.\nShow me less cars and less fitness — no supercars, motorsport, gym workouts or calisthenics.\nThis is my real personal account, so keep it safe. Run it live: like, save and search.\nAim for about 60% cooking in the feed. Spend at most 2 dollars and stop in 40 minutes.\nStop when the goal is reached."
+}

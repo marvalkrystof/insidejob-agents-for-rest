@@ -3,18 +3,18 @@
 
 const $ = (id) => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
-const nf = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 });
-const nf2 = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 });
+const nf2 = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const NBSP = ' ';
 const pct = (v) => (v === null || v === undefined || Number.isNaN(v) ? '–' : `${Math.round(v * 100)}${NBSP}%`);
-const pp = (v) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(Math.round(v * 100))}${NBSP}p.${NBSP}b.`;
-const hhmmss = (ts) => { const d = new Date(ts); return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
-const hhmm = (ts) => { const d = new Date(ts); return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('cs-CZ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }); };
+const pp = (v) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(Math.round(v * 100))}${NBSP}pp`;
+const hhmmss = (ts) => { const d = new Date(ts); return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+const hhmm = (ts) => { const d = new Date(ts); return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }); };
 const ago = (ms) => {
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
-  if (s < 60) return `před ${s} s`;
-  if (s < 3600) return `před ${Math.floor(s / 60)} min`;
-  return `před ${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min`;
+  if (s < 60) return `${s} s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min ago`;
 };
 const dur = (ms) => {
   const m = Math.max(0, Math.round(ms / 60000));
@@ -25,38 +25,38 @@ const TARGET_HIT = 0.5;
 const OLD_HIT = 0.6;
 
 const CAT = {
-  TARGET_STRONG: { label: 'Silná shoda', cls: 'c-strong', css: '--s1' },
-  TARGET_WEAK: { label: 'Slabá shoda', cls: 'c-weak', css: '--s1-weak' },
-  NEUTRAL: { label: 'Jiný obsah', cls: 'c-neutral', css: '--neutral' },
-  OLD_TOPIC: { label: 'Staré téma', cls: 'c-old', css: '--s2' },
+  TARGET_STRONG: { label: 'Strong match', cls: 'c-strong', css: '--s1' },
+  TARGET_WEAK: { label: 'Weak match', cls: 'c-weak', css: '--s1-weak' },
+  NEUTRAL: { label: 'Other content', cls: 'c-neutral', css: '--neutral' },
+  OLD_TOPIC: { label: 'Old topic', cls: 'c-old', css: '--s2' },
 };
 const CAT_ORDER = ['TARGET_STRONG', 'TARGET_WEAK', 'NEUTRAL', 'OLD_TOPIC'];
 const SOURCES = {
-  measure: 'Měření', feed: 'Feed', search: 'Hledání', seed: 'Startovní reel', seed_chain: 'Navazující',
-  explore: 'Explore', profile: 'Profil',
+  measure: 'Measurement', feed: 'Feed', search: 'Search', seed: 'Seed reel', seed_chain: 'After seed',
+  explore: 'Explore', profile: 'Profile',
 };
 const ACTIONS = {
-  like: 'To se mi líbí', save: 'Uložit', follow: 'Sledovat', unfollow: 'Přestat sledovat',
-  not_interested: 'Nemám zájem', search: 'Vyhledávání', share: 'Sdílení', seed_open: 'Startovní reels',
+  like: 'Like', save: 'Save', follow: 'Follow', unfollow: 'Unfollow',
+  not_interested: 'Not interested', search: 'Search', share: 'Share', seed_open: 'Seed reels',
 };
 const ACT_SHORT = {
-  watch_full: 'dokoukáno', rewatch: '2×', like: 'like', save: 'uloženo', follow: 'follow', skip: 'přeskočeno',
-  not_interested: 'nezájem', measure: 'měření', open_audio: 'zvuk', share: 'sdíleno',
+  watch_full: 'watched', rewatch: '2×', like: 'like', save: 'saved', follow: 'follow', skip: 'skipped',
+  not_interested: 'not interested', measure: 'measure', open_audio: 'audio', share: 'shared',
 };
 const TERMINAL = {
-  SUCCESS: { tone: 'good', label: 'Cíl splněn' },
-  SUCCESS_CONFIRMED: { tone: 'good', label: 'Cíl splněn a změna vydržela' },
-  PLATEAU: { tone: 'warn', label: 'Feed se posunul, ale dál neroste' },
-  NO_EFFECT: { tone: 'bad', label: 'Bez průkazného efektu' },
-  LIMIT_REACHED: { tone: 'warn', label: 'Došel limit' },
-  ABORTED: { tone: 'bad', label: 'Přerušeno kvůli varování Instagramu' },
-  CANCELLED: { tone: 'warn', label: 'Cíl zrušen' },
+  SUCCESS: { tone: 'good', label: 'Goal reached' },
+  SUCCESS_CONFIRMED: { tone: 'good', label: 'Goal reached and the change lasted' },
+  PLATEAU: { tone: 'warn', label: 'Feed moved, but stopped improving' },
+  NO_EFFECT: { tone: 'bad', label: 'No significant effect' },
+  LIMIT_REACHED: { tone: 'warn', label: 'Limit reached' },
+  ABORTED: { tone: 'bad', label: 'Aborted after an Instagram warning' },
+  CANCELLED: { tone: 'warn', label: 'Goal cancelled' },
 };
 const STEPS = [
-  ['M', 'Měření'], ['CHECK', 'Kontrola'], ['F1', 'Úklid'], ['F2', 'Hledání'],
-  ['F3', 'Reels'], ['F4', 'Explore'], ['F5', 'Plán'], ['PAUSE', 'Pauza'],
+  ['M', 'Measure'], ['CHECK', 'Check'], ['F1', 'Cleanup'], ['F2', 'Search'],
+  ['F3', 'Reels'], ['F4', 'Explore'], ['F5', 'Plan'], ['PAUSE', 'Pause'],
 ];
-const EXTRA_STEPS = { FINAL: 'Finální měření', REPORT: 'Zpráva', STOP: 'Stop', MAINTAIN: 'Udržování', PAUSE_DAY: 'Pauza do zítřka', PERSIST: 'Čekání na ověření', START: 'Start' };
+const EXTRA_STEPS = { FINAL: 'Final measurement', REPORT: 'Report', STOP: 'Stop', MAINTAIN: 'Maintain', PAUSE_DAY: 'Pause until tomorrow', PERSIST: 'Waiting to verify', START: 'Start' };
 const NODE_STEP = {
   start: 'START', measure: 'M', check: 'CHECK', f1: 'F1', f2: 'F2', f3: 'F3', f4: 'F4', f5: 'F5',
   pause: 'PAUSE', pauseDay: 'PAUSE_DAY', persistWait: 'PERSIST', finalM: 'FINAL', report: 'REPORT', stop: 'STOP', maintain: 'MAINTAIN',
@@ -103,8 +103,8 @@ function connect() {
   const q = S.goalId ? `?goal=${encodeURIComponent(S.goalId)}` : '';
   es = new EventSource(`/api/stream${q}`);
   const on = (type, fn) => es.addEventListener(type, (e) => { fn(JSON.parse(e.data)); schedule(); });
-  es.onopen = () => { $('conn').className = 'conn ok'; $('conn').title = 'Spojeno, data chodí živě'; };
-  es.onerror = () => { $('conn').className = 'conn bad'; $('conn').title = 'Spojení přerušeno, zkouším znovu…'; };
+  es.onopen = () => { $('conn').className = 'conn ok'; $('conn').title = 'Connected, data is live'; };
+  es.onerror = () => { $('conn').className = 'conn bad'; $('conn').title = 'Connection lost, retrying…'; };
   on('snapshot', (d) => {
     S.goalId = d.goal_id; S.goals = d.goals; S.config = d.config; S.budgets = d.budgets; S.cyclesPerDay = d.cycles_per_day;
     S.events = d.events; S.state = d.state; S.steps = d.steps; S.proc = d.proc; S.out = d.out;
@@ -155,7 +155,7 @@ function measurements() {
 const checks = () => S.events.filter((e) => e.event === 'check');
 function measLabel(m) {
   if (m.phase === 'M_final') return `Final ${m.cycle}`;
-  if (m.phase === 'M_persist') return `Ověření ${m.cycle}`;
+  if (m.phase === 'M_persist') return `Persist ${m.cycle}`;
   return `M${m.cycle}`;
 }
 /** Klouzavý feed_alignment přes reels ze zdroje "feed" (sekce 13.1). */
@@ -196,7 +196,7 @@ function renderGoals() {
       o.selected = g.goal_id === S.goalId;
       return o;
     }));
-    if (!S.goals.length) sel.append(new Option('Zatím žádný cíl', ''));
+    if (!S.goals.length) sel.append(new Option('No goal yet', ''));
   }
   const fsel = $('goalFileSelect');
   const withFile = S.goals.filter((g) => g.file && g.goal_id !== 'fixture-test');
@@ -206,12 +206,12 @@ function renderGoals() {
     fsel.dataset.key = fkey;
     fsel.replaceChildren(...withFile.map((g) => new Option(`${g.target_topic} (${g.file})`, g.goal_id)));
     if (withFile.some((g) => g.goal_id === prev)) { fsel.value = prev; if (prev === S.pickFile) S.pickFile = null; }
-    if (!withFile.length) fsel.append(new Option('Žádný soubor v goals/', ''));
+    if (!withFile.length) fsel.append(new Option('No file in goals/', ''));
   }
   // Výběr pro Start drží zobrazený cíl (horní výběr), ať Start spustí to, co vidíš.
   if (!S.pickFile && S.goalId && withFile.some((x) => x.goal_id === S.goalId) && fsel.value !== S.goalId) fsel.value = S.goalId;
   const g = withFile.find((x) => x.goal_id === fsel.value);
-  $('goalFileInfo').textContent = g ? `Stav: ${g.terminal ?? g.status ?? 'nový'} · poslední aktivita ${g.last_activity ? hhmm(g.last_activity) : '–'}` : '';
+  $('goalFileInfo').textContent = g ? `Status: ${g.terminal ?? g.status ?? 'new'} · last activity ${g.last_activity ? hhmm(g.last_activity) : '–'}` : '';
 }
 
 function renderStatus() {
@@ -223,29 +223,29 @@ function renderStatus() {
   $('keyApify').classList.toggle('on', !!p.has_apify);
   if (p.running) {
     pill.className = `pill ${p.stopping ? 'stop' : 'run'}`;
-    pill.textContent = p.stopping ? 'Zastavuji…' : p.kind === 'fixture' ? 'Běží test' : p.live ? 'Běží naplno' : 'Běží, jen sleduje';
+    pill.textContent = p.stopping ? 'Stopping…' : p.kind === 'fixture' ? 'Test running' : p.live ? 'Running (full)' : 'Running (watch only)';
     $('statusSince').textContent = p.started_at ? `${dur(Date.now() - p.started_at)}` : '';
-    $('statusText').textContent = `Cíl ${p.goal_id}. ${p.stopping ? 'Agent dokončuje akci a ukládá stav. Další klik ho ukončí hned.' : 'Okno prohlížeče s Instagramem nezavírej, klidně ho dej do pozadí.'}`;
+    $('statusText').textContent = `Goal ${p.goal_id}. ${p.stopping ? 'The agent is finishing its action and saving state. Click again to stop it immediately.' : 'Do not close the Instagram browser window; it can stay in the background.'}`;
     start.disabled = true;
     stop.disabled = false;
-    stop.textContent = p.stopping ? 'Ukončit hned' : 'Zastavit';
+    stop.textContent = p.stopping ? 'Stop now' : 'Stop';
   } else if (p.external) {
     const goals = p.external_goals ?? [];
     pill.className = 'pill ext';
-    pill.textContent = 'Běží z terminálu';
-    $('statusSince').textContent = p.external_since ? `poslední krok ${ago(p.external_since)}` : '';
-    $('statusText').textContent = `${goals.length > 1 ? 'Session' : 'Session'} ${goals.join(', ')} ${goals.length > 1 ? 'běží' : 'běží'} mimo aplikaci. Panel je sleduje živě (cíl vyber nahoře); zastavit je jde v terminálu (Ctrl+C).${p.external_blocking ? '' : ' Test na napodobenině nebrání spuštění agenta.'}`;
+    pill.textContent = 'Running from terminal';
+    $('statusSince').textContent = p.external_since ? `last step ${ago(p.external_since)}` : '';
+    $('statusText').textContent = `${goals.length > 1 ? 'Sessions' : 'Session'} ${goals.join(', ')} ${goals.length > 1 ? 'are' : 'is'} running outside the app. The panel follows live (pick the goal at the top); stop it in the terminal (Ctrl+C).${p.external_blocking ? '' : ' A test on the local copy does not block starting the agent.'}`;
     start.disabled = S.tab === 'fixture' ? goals.includes('fixture-test') : !!p.external_blocking;
     stop.disabled = true;
-    stop.textContent = 'Zastavit';
+    stop.textContent = 'Stop';
   } else {
     pill.className = 'pill';
-    pill.textContent = 'Neběží';
-    $('statusSince').textContent = p.exit ? `skončil ${hhmm(p.exit.at)}` : '';
-    $('statusText').textContent = p.exit ? `Poslední běh skončil ${p.exit.signal ? `signálem ${p.exit.signal}` : `s kódem ${p.exit.code}`}.` : 'Vyber cíl a spusť trénink.';
+    pill.textContent = 'Not running';
+    $('statusSince').textContent = p.exit ? `ended ${hhmm(p.exit.at)}` : '';
+    $('statusText').textContent = p.exit ? `The last run ended ${p.exit.signal ? `with signal ${p.exit.signal}` : `with code ${p.exit.code}`}.` : 'Pick a goal and start training.';
     start.disabled = false;
     stop.disabled = true;
-    stop.textContent = 'Zastavit';
+    stop.textContent = 'Stop';
   }
   $('runModeCard').hidden = S.tab === 'fixture';
   const live = document.querySelector('input[name="runmode"]:checked')?.value === 'live';
@@ -269,12 +269,12 @@ function renderBanner() {
     list = gs?.report?.next_steps ?? [];
   } else if (cooldown) {
     tone = 'bad';
-    title = 'Instagram omezil akce';
-    text = `Agent má pauzu do ${hhmm(cooldown)}. Do té doby nic nespouštěj.`;
+    title = 'Instagram restricted actions';
+    text = `The agent is paused until ${hhmm(cooldown)}. Do not start anything before then.`;
   } else if (gs?.status === 'persist_wait' && gs.persist_wait_until) {
     tone = 'info';
-    title = 'Čeká se na ověření, že změna vydrží';
-    text = `Další měření půjde spustit od ${hhmm(gs.persist_wait_until)}.`;
+    title = 'Waiting to verify that the change lasts';
+    text = `The next measurement can start from ${hhmm(gs.persist_wait_until)}.`;
   }
   if (!tone) { b.hidden = true; return; }
   b.hidden = false;
@@ -309,7 +309,7 @@ function renderTiles() {
   const m0 = ms.find((m) => m.phase === 'M' && m.cycle === 0) ?? ms[0];
   const last = ms.at(-1);
   const topic = S.config?.target_topic ?? S.state?.goal?.target_topic ?? '';
-  $('heroLabel').textContent = topic ? `Podíl tématu „${topic}“ (oficiální měření)` : 'Podíl tématu ve feedu';
+  $('heroLabel').textContent = topic ? `Share of “${topic}” (official measurement)` : 'Topic share in feed';
   $('heroValue').textContent = last ? pct(last.T) : '–';
   const hd = $('heroDelta');
   hd.replaceChildren();
@@ -321,20 +321,20 @@ function renderTiles() {
     d.textContent = pp(lift);
     const badge = document.createElement('span');
     badge.className = `badge ${sig ? 'good' : 'warn'}`;
-    badge.textContent = sig ? 'průkazné' : 'zatím neprůkazné';
-    hd.append(d, ` oproti výchozím ${pct(m0.T)} `, badge);
+    badge.textContent = sig ? 'significant' : 'not significant yet';
+    hd.append(d, ` vs. baseline ${pct(m0.T)} `, badge);
   } else if (last) {
-    hd.textContent = `výchozí měření, interval ${pct(last.T_ci[0])}–${pct(last.T_ci[1])}`;
-  } else hd.textContent = 'čeká na první měření';
+    hd.textContent = `baseline measurement, interval ${pct(last.T_ci[0])}–${pct(last.T_ci[1])}`;
+  } else hd.textContent = 'waiting for the first measurement';
 
   const roll = rolling();
   const lr = roll.at(-1);
   $('tLive').textContent = lr ? pct(lr.v) : '–';
-  $('tLiveSub').textContent = lr ? `${roll.length} reels z feedu celkem` : 'zatím žádné reels z feedu';
+  $('tLiveSub').textContent = lr ? `${roll.length} feed reels in total` : 'no feed reels yet';
 
   $('tOld').textContent = last ? pct(last.O) : '–';
   const hasOld = (S.config?.old_topics?.length ?? 0) > 0;
-  $('tOldSub').textContent = last && m0 && last !== m0 ? `výchozí ${pct(m0.O)}` : hasOld ? S.config.old_topics.map((o) => o.topic).join(', ') : 'není zadané';
+  $('tOldSub').textContent = last && m0 && last !== m0 ? `baseline ${pct(m0.O)}` : hasOld ? S.config.old_topics.map((o) => o.topic).join(', ') : 'not set';
 
   const gs = S.state?.goal;
   const lim = S.config?.limits;
@@ -374,9 +374,9 @@ function renderStepper() {
   const nowT = $('nowText');
   if (lastMsg) {
     nowT.textContent = `${lastMsg.node}: ${lastMsg.msg}`;
-    $('nowWhen').textContent = `${live ? '' : 'poslední záznam '}${ago(Date.parse(lastMsg.ts))}`;
+    $('nowWhen').textContent = `${live ? '' : 'last entry '}${ago(Date.parse(lastMsg.ts))}`;
   } else {
-    nowT.textContent = live ? 'Čekám na první krok…' : 'Agent neběží.';
+    nowT.textContent = live ? 'Waiting for the first step…' : 'The agent is not running.';
     $('nowWhen').textContent = '';
   }
 }
@@ -450,9 +450,9 @@ function renderMeasChart() {
   const hasOld = ms.some((m) => m.O > 0) || (S.config?.old_topics?.length ?? 0) > 0;
 
   const leg = $('measLegend');
-  const legItems = [['line', '--s1', `Téma (${S.config?.target_topic ?? 'cíl'})`], ['band', null, '95% interval']];
-  if (hasOld) legItems.push(['line', '--s2', 'Staré téma']);
-  legItems.push(['ref', null, 'cíl a práh průkaznosti']);
+  const legItems = [['line', '--s1', `Topic (${S.config?.target_topic ?? 'goal'})`], ['band', null, '95% interval']];
+  if (hasOld) legItems.push(['line', '--s2', 'Old topic']);
+  legItems.push(['ref', null, 'target and significance threshold']);
   leg.replaceChildren(...legItems.map(([k, v, t]) => {
     const s = document.createElement('span');
     const i = document.createElement('i');
@@ -466,7 +466,7 @@ function renderMeasChart() {
   if (!ms.length) {
     const d = document.createElement('div');
     d.className = 'empty';
-    d.textContent = 'Zatím žádné měření. První (M0) proběhne na začátku tréninku po 10 minutách klidu.';
+    d.textContent = 'No measurement yet. The first one (M0) runs at the start of training after 10 minutes of inactivity.';
     box.replaceChildren(d);
     return;
   }
@@ -476,18 +476,18 @@ function renderMeasChart() {
   // Stejné označení (např. dvě M0 po restartu session) rozlišit časem.
   const labels = ms.map(measLabel);
   const dup = labels.map((l) => labels.filter((x) => x === l).length > 1);
-  const xLabel = (q, i) => (dup[i] ? `${labels[i]} ${new Date(q.ts).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}` : labels[i]);
+  const xLabel = (q, i) => (dup[i] ? `${labels[i]} ${new Date(q.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : labels[i]);
   const plotW = W - m.l - m.r, plotH = H - m.t - m.b;
   const n = ms.length;
   const x = (i) => m.l + (n === 1 ? plotW / 2 : (i * plotW) / (n - 1));
   const y = (v) => m.t + (1 - Math.max(0, Math.min(1, v))) * plotH;
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Oficiální měření: ${ms.map((q) => `${measLabel(q)} ${pct(q.T)}`).join(', ')}` });
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Official measurements: ${ms.map((q) => `${measLabel(q)} ${pct(q.T)}`).join(', ')}` });
 
   yAxis(svg, m, plotW, y);
-  refLine(svg, m, plotW, y(target), `cíl ${pct(target)}`);
+  refLine(svg, m, plotW, y(target), `target ${pct(target)}`);
   if (m0) {
     const u0 = m0.T_ci[1];
-    if (Math.abs(y(u0) - y(target)) > 12) refLine(svg, m, plotW, y(u0), `práh ${pct(u0)}`);
+    if (Math.abs(y(u0) - y(target)) > 12) refLine(svg, m, plotW, y(u0), `threshold ${pct(u0)}`);
   }
 
   // interval jako pás + svislé úsečky
@@ -511,8 +511,8 @@ function renderMeasChart() {
   const last = ms[n - 1];
   const yT = y(last.T), yO = y(last.O);
   if (!hasOld || Math.abs(yT - yO) >= 16) {
-    svgText(svg, x(n - 1) + 10, yT + 4, `Téma ${pct(last.T)}`, { class: 'lbl-strong' });
-    if (hasOld) svgText(svg, x(n - 1) + 10, yO + 4, `Staré ${pct(last.O)}`, { class: 'lbl' });
+    svgText(svg, x(n - 1) + 10, yT + 4, `Topic ${pct(last.T)}`, { class: 'lbl-strong' });
+    if (hasOld) svgText(svg, x(n - 1) + 10, yO + 4, `Old ${pct(last.O)}`, { class: 'lbl' });
   }
 
   // hover: zaměřovač na nejbližší měření
@@ -521,14 +521,14 @@ function renderMeasChart() {
   const showAt = (i, evt) => {
     const q = ms[i];
     cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
-    const rows = [{ color: cssVar('--s1'), value: pct(q.T), label: `téma (interval ${pct(q.T_ci[0])}–${pct(q.T_ci[1])})` }];
-    if (hasOld) rows.push({ color: cssVar('--s2'), value: pct(q.O), label: 'staré téma' });
+    const rows = [{ color: cssVar('--s1'), value: pct(q.T), label: `topic (interval ${pct(q.T_ci[0])}–${pct(q.T_ci[1])})` }];
+    if (hasOld) rows.push({ color: cssVar('--s2'), value: pct(q.O), label: 'old topic' });
     if (m0 && q !== m0) {
       rows.push({ value: pp(q.T - m0.T), label: 'oproti M0' });
-      rows.push({ value: q.T_ci[0] > m0.T_ci[1] ? 'ano' : 'ne', label: 'průkazné zlepšení' });
+      rows.push({ value: q.T_ci[0] > m0.T_ci[1] ? 'yes' : 'no', label: 'significant improvement' });
     }
     if (q.T_feed !== null && q.T_feed !== undefined) rows.push({ value: `${pct(q.T_feed)} / ${pct(q.T_explore)}`, label: 'reels / Explore' });
-    showTip(evt, `${labels[i]} · ${hhmm(q.ts)} · ${q.n} položek`, rows);
+    showTip(evt, `${labels[i]} · ${hhmm(q.ts)} · ${q.n} items`, rows);
   };
   const nearest = (evt) => {
     const r = svg.getBoundingClientRect();
@@ -548,7 +548,7 @@ function renderMeasTable(ms, m0) {
   const wrap = $('measTable');
   const t = document.createElement('table');
   const head = document.createElement('tr');
-  for (const h of ['Měření', 'Čas', 'Téma', 'Interval', 'Staré téma', 'Oproti M0', 'Průkazné']) {
+  for (const h of ['Measurement', 'Time', 'Topic', 'Interval', 'Old topic', 'vs. M0', 'Significant']) {
     const th = document.createElement('th'); th.textContent = h; head.append(th);
   }
   const thead = document.createElement('thead'); thead.append(head);
@@ -566,7 +566,7 @@ function renderMeasTable(ms, m0) {
 document.querySelectorAll('[data-table]').forEach((b) => b.addEventListener('click', () => {
   const el = $(b.dataset.table);
   el.hidden = !el.hidden;
-  b.textContent = el.hidden ? 'Tabulka' : 'Skrýt tabulku';
+  b.textContent = el.hidden ? 'Table' : 'Hide table';
 }));
 
 // ── živý feed ──
@@ -580,7 +580,7 @@ function renderLive() {
   if (!roll.length) {
     const d = document.createElement('div');
     d.className = 'empty';
-    d.textContent = 'Zatím žádné reels z feedu. Objeví se ve fázi F3 (scrollování Reels).';
+    d.textContent = 'No feed reels yet. They appear in phase F3 (scrolling Reels).';
     box.replaceChildren(d);
   } else {
     const W = Math.max(300, box.clientWidth), H = 200;
@@ -590,10 +590,10 @@ function renderLive() {
     const x = (i) => m.l + (n === 1 ? 0 : (i * plotW) / (n - 1));
     const y = (v) => m.t + (1 - v) * plotH;
     const last = roll[n - 1];
-    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Klouzavý podíl k tématu: teď ${pct(last.v)} z posledních ${last.n} reels z feedu` });
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Rolling on-topic share: now ${pct(last.v)} of the last ${last.n} feed reels` });
     yAxis(svg, m, plotW, y);
-    refLine(svg, m, plotW, y(target), `cíl ${pct(target)}`);
-    if (m0 && Math.abs(y(m0.T) - y(target)) > 12) refLine(svg, m, plotW, y(m0.T), `výchozí ${pct(m0.T)}`);
+    refLine(svg, m, plotW, y(target), `target ${pct(target)}`);
+    if (m0 && Math.abs(y(m0.T) - y(target)) > 12) refLine(svg, m, plotW, y(m0.T), `baseline ${pct(m0.T)}`);
 
     // hranice cyklů
     let prevCycle = null;
@@ -601,7 +601,7 @@ function renderLive() {
       const c = p.r.cycle;
       if (prevCycle !== null && c !== prevCycle) {
         svgEl('line', { x1: x(i), x2: x(i), y1: m.t, y2: m.t + plotH, class: 'grid' }, svg);
-        svgText(svg, x(i) + 4, m.t + 10, `cyklus ${c}`);
+        svgText(svg, x(i) + 4, m.t + 10, `cycle ${c}`);
       }
       prevCycle = c;
     });
@@ -626,10 +626,10 @@ function renderLive() {
       const p = roll[i];
       cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
       const c = category(p.r);
-      showTip(e, `Reel z feedu #${i + 1} · ${hhmmss(p.r.ts)} · cyklus ${p.r.cycle}`, [
-        { color: cssVar('--s1'), value: pct(p.v), label: `k tématu (posl. ${p.n})` },
+      showTip(e, `Feed reel #${i + 1} · ${hhmmss(p.r.ts)} · cycle ${p.r.cycle}`, [
+        { color: cssVar('--s1'), value: pct(p.v), label: `on topic (last ${p.n})` },
         { color: cssVar(CAT[c].css), value: CAT[c].label, label: `@${p.r.author ?? '?'}` },
-        { value: nf.format(Number(p.r.target_score ?? 0)), label: 'skóre tématu' },
+        { value: nf.format(Number(p.r.target_score ?? 0)), label: 'topic score' },
       ]);
     });
     hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); hideTip(); });
@@ -649,15 +649,15 @@ function renderLive() {
     return s;
   }));
   const strip = $('strip');
-  strip.setAttribute('aria-label', `Zhlédnuté reels: ${CAT_ORDER.map((k) => `${CAT[k].label} ${counts[k]}`).join(', ')}`);
+  strip.setAttribute('aria-label', `Watched reels: ${CAT_ORDER.map((k) => `${CAT[k].label} ${counts[k]}`).join(', ')}`);
   strip.replaceChildren(...shown.map((r) => {
     const s = document.createElement('span');
     const c = category(r);
     s.className = CAT[c].cls;
     s.addEventListener('pointerenter', (e) => showTip(e, `${hhmmss(r.ts)} · ${r.phase ?? ''} · ${SOURCES[r.source] ?? r.source}`, [
       { color: cssVar(CAT[c].css), value: CAT[c].label, label: `@${r.author ?? '?'}` },
-      { value: nf.format(Number(r.target_score ?? 0)), label: 'skóre tématu' },
-      { value: `${nf.format(Number(r.watch_s ?? 0))} s`, label: (r.actions ?? []).map((a) => ACT_SHORT[a] ?? a).join(', ') || 'bez akce' },
+      { value: nf.format(Number(r.target_score ?? 0)), label: 'topic score' },
+      { value: `${nf.format(Number(r.watch_s ?? 0))} s`, label: (r.actions ?? []).map((a) => ACT_SHORT[a] ?? a).join(', ') || 'no action' },
     ]));
     s.addEventListener('pointermove', (e) => { tip.style.left = `${Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 14)}px`; tip.style.top = `${Math.min(innerHeight - tip.offsetHeight - 8, e.clientY + 14)}px`; });
     s.addEventListener('pointerleave', hideTip);
@@ -686,7 +686,7 @@ function renderSources() {
   }));
   const box = $('srcBars');
   if (!rows.length) {
-    const d = document.createElement('div'); d.className = 'empty muted small'; d.textContent = 'Zatím žádné reels.';
+    const d = document.createElement('div'); d.className = 'empty muted small'; d.textContent = 'No reels yet.';
     box.replaceChildren(d);
     return;
   }
@@ -718,7 +718,7 @@ function renderBudgets() {
   const box = $('budgets');
   const b = S.state?.budgets;
   const caps = S.budgets;
-  $('budgetMode').textContent = S.config ? `režim ${S.config.mode === 'fast' ? 'rychlý' : 'bezpečný'}${b?.day ? ` · ${b.day}` : ''}` : '';
+  $('budgetMode').textContent = S.config ? `${S.config.mode === 'fast' ? 'fast' : 'safe'} mode${b?.day ? ` · ${b.day}` : ''}` : '';
   if (!caps) { box.replaceChildren(); return; }
   const today = new Date().toISOString().slice(0, 10);
   const used = b && b.day === today ? b.used ?? {} : {};
@@ -726,7 +726,7 @@ function renderBudgets() {
   const rows = Object.entries(caps).filter(([, c]) => c.day > 0);
   const cyc = document.createElement('div');
   cyc.className = 'mrow';
-  const cycName = document.createElement('span'); cycName.className = 'name'; cycName.textContent = 'Cykly dnes';
+  const cycName = document.createElement('span'); cycName.className = 'name'; cycName.textContent = 'Cycles today';
   const cycMeter = document.createElement('div'); cycMeter.className = 'meter';
   const cycFill = document.createElement('span');
   const cUsed = b && b.day === today ? b.cycles_today ?? 0 : 0;
@@ -741,7 +741,7 @@ function renderBudgets() {
     const h = Number(hour[a] ?? 0);
     const row = document.createElement('div');
     row.className = 'mrow';
-    row.title = `Za tuto hodinu ${h} / ${c.hour}`;
+    row.title = `This hour ${h} / ${c.hour}`;
     const name = document.createElement('span'); name.className = 'name'; name.textContent = ACTIONS[a] ?? a;
     const meter = document.createElement('div'); meter.className = 'meter';
     const fill = document.createElement('span');
@@ -766,8 +766,8 @@ function renderJudge() {
   const version = [...S.events].reverse().find((e) => e.judge_version)?.judge_version ?? '–';
   const kids = [];
   if (total) {
-    const order = ['text', 'vision', 'keyword', 'timeout', 'error'];
-    const names = { text: 'Z textu', vision: 'Se screenshotem', keyword: 'Klíčová slova', timeout: 'Nestihl (→ Jiný obsah)', error: 'Chyba' };
+    const order = ['text', 'prefetch', 'vision', 'keyword', 'timeout', 'error'];
+    const names = { text: 'From text', prefetch: 'From text (ahead)', vision: 'With screenshot', keyword: 'Keywords', timeout: 'Too slow (→ Other content)', error: 'Error' };
     const keys = [...new Set([...order.filter((k) => count[k]), ...Object.keys(count)])];
     const rows = document.createElement('div');
     rows.className = 'meters';
@@ -788,15 +788,15 @@ function renderJudge() {
     if (bad > 0.2) {
       const w = document.createElement('p');
       w.className = 'warn small';
-      w.textContent = `Klasifikace u ${pct(bad)} reels nestihla odpovědět a reel se bral jako „jiný obsah“. Feed tak může vypadat hůř, než je, a agent nedává lajky. Zkontroluj rychlost modelu nebo limit na latenci.`;
+      w.textContent = `Classification did not answer in time for ${pct(bad)} of reels, so they counted as “other content”. The feed may look worse than it is and the agent gives no likes. Check the model speed or the latency limit.`;
       kids.push(w);
     }
   } else {
-    const d = document.createElement('p'); d.className = 'muted small'; d.textContent = 'Zatím žádné klasifikované reels.';
+    const d = document.createElement('p'); d.className = 'muted small'; d.textContent = 'No classified reels yet.';
     kids.push(d);
   }
   const dl = document.createElement('dl'); dl.className = 'kv';
-  for (const [k, v] of [['Verze', version], ['Klasifikováno', String(total)]]) {
+  for (const [k, v] of [['Version', version], ['Classified', String(total)]]) {
     const dt = document.createElement('dt'); dt.textContent = k;
     const dd = document.createElement('dd'); dd.textContent = v;
     dl.append(dt, dd);
@@ -812,24 +812,24 @@ function renderAlerts() {
   for (const e of S.events) {
     let tone = 'info', text = '';
     switch (e.event) {
-      case 'goal_start': text = `Start cíle „${e.target_topic}“, režim ${e.mode === 'fast' ? 'rychlý' : 'bezpečný'}.`; break;
+      case 'goal_start': text = `Goal “${e.target_topic}” started, ${e.mode === 'fast' ? 'fast' : 'safe'} mode.`; break;
       case 'notify': tone = 'warn'; text = e.msg; break;
-      case 'stop': tone = 'bad'; text = `STOP: ${e.reason}${e.detail ? ` (${e.detail})` : ''}. Pauza do ${hhmm(e.cooldown_until)}.`; break;
-      case 'error': tone = 'bad'; text = `Chyba v ${e.node}: ${e.message}`; break;
-      case 'session_end': tone = 'warn'; text = `Konec session: ${e.reason}`; break;
-      case 'selector_missing': tone = 'warn'; text = `Nenašel prvek na stránce: ${e.what} (${e.count}×)`; break;
-      case 'capability_missing': text = `Web nemá funkci „${e.capability}“: ${e.why}`; break;
-      case 'terminal': tone = (TERMINAL[e.terminal]?.tone ?? 'info'); text = `Konečný stav ${e.terminal}.`; break;
-      case 'persist_wait': text = `Čekání na ověření do ${hhmm(e.until)}.`; break;
-      case 'cycle_summary': tone = 'good'; text = `Cyklus ${e.cycle} hotový: feed ${pct(e.feed_alignment)}, Explore ${pct(e.explore_alignment)}. Dál: ${e.next}${e.reason ? ` (${e.reason})` : ''}.`; break;
-      case 'measurement': text = `Měření ${measLabel(e)}: téma ${pct(e.T)} (${pct(e.T_ci[0])}–${pct(e.T_ci[1])}), staré ${pct(e.O)}.`; break;
+      case 'stop': tone = 'bad'; text = `STOP: ${e.reason}${e.detail ? ` (${e.detail})` : ''}. Paused until ${hhmm(e.cooldown_until)}.`; break;
+      case 'error': tone = 'bad'; text = `Error in ${e.node}: ${e.message}`; break;
+      case 'session_end': tone = 'warn'; text = `Session ended: ${e.reason}`; break;
+      case 'selector_missing': tone = 'warn'; text = `Element not found on the page: ${e.what} (${e.count}×)`; break;
+      case 'capability_missing': text = `The web app lacks “${e.capability}”: ${e.why}`; break;
+      case 'terminal': tone = (TERMINAL[e.terminal]?.tone ?? 'info'); text = `Final state ${e.terminal}.`; break;
+      case 'persist_wait': text = `Waiting to verify until ${hhmm(e.until)}.`; break;
+      case 'cycle_summary': tone = 'good'; text = `Cycle ${e.cycle} done: feed ${pct(e.feed_alignment)}, Explore ${pct(e.explore_alignment)}. Next: ${e.next}${e.reason ? ` (${e.reason})` : ''}.`; break;
+      case 'measurement': text = `Measurement ${measLabel(e)}: topic ${pct(e.T)} (${pct(e.T_ci[0])}–${pct(e.T_ci[1])}), old ${pct(e.O)}.`; break;
       default: continue;
     }
     items.push({ ts: e.ts, tone, text });
   }
   const ul = $('alerts');
   if (!items.length) {
-    const li = document.createElement('li'); li.className = 'muted'; li.textContent = 'Zatím nic.';
+    const li = document.createElement('li'); li.className = 'muted'; li.textContent = 'Nothing yet.';
     ul.replaceChildren(li);
     return;
   }
@@ -913,7 +913,7 @@ function syncModeFields() {
   const fast = form.querySelector('input[name="mode"][value="fast"]');
   fast.disabled = real;
   if (real) form.querySelector('input[name="mode"][value="safe"]').checked = true;
-  $('modeNote').textContent = real ? 'Skutečný účet má vždy bezpečné tempo a nižší limity.' : 'Rychlé tempo jen na testovacím účtu.';
+  $('modeNote').textContent = real ? 'A real account always uses the safe pace and lower limits.' : 'Fast pace only on a test account.';
   const lim = S.defaults?.modes?.[form.mode.value];
   if (lim) {
     form.max_cycles.placeholder = String(lim.max_cycles);
@@ -1017,11 +1017,11 @@ function renderNlResult(r) {
   };
   const meta = document.createElement('div');
   meta.className = 'meta';
-  meta.textContent = `${r.model} · ${nf.format(r.ms / 1000)} s · ${r.run_mode === 'live' ? 'Naplno' : 'Jen sledovat'}`;
+  meta.textContent = `${r.model} · ${nf.format(r.ms / 1000)} s · ${r.run_mode === 'live' ? 'Full' : 'Watch only'}`;
   box.replaceChildren(...[
-    block('Doplněno modelem', r.assumptions),
-    block('Upřesni, prosím', r.questions, 'q'),
-    block('Pozor', r.warnings, 'w'),
+    block('Filled in by the model', r.assumptions),
+    block('Please clarify', r.questions, 'q'),
+    block('Heads up', r.warnings, 'w'),
     meta,
   ].filter(Boolean));
   box.hidden = false;
@@ -1031,18 +1031,18 @@ async function compileNl() {
   const text = $('nlText').value.trim();
   const btn = $('nlBtn'), st = $('nlStatus');
   showError('');
-  if (text.length < 3) { st.textContent = 'Napiš aspoň pár slov.'; return; }
+  if (text.length < 3) { st.textContent = 'Write at least a few words.'; return; }
   btn.disabled = true; btn.classList.add('loading');
-  st.textContent = 'Model sestavuje cíl…';
+  st.textContent = 'The model is building the goal…';
   const t0 = Date.now();
-  const tick = setInterval(() => { st.textContent = `Model sestavuje cíl… ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
+  const tick = setInterval(() => { st.textContent = `The model is building the goal… ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
   try {
     const r = await post('/api/compile', { text });
     S.draft = { ...r, query: text };
     fillForm(r);
     renderNlResult(r);
     renderDraftJson();
-    st.textContent = 'Hotovo. Zkontroluj formulář a spusť, nebo popis uprav a sestav znovu.';
+    st.textContent = 'Done. Check the form and start, or edit the description and build again.';
   } catch (err) {
     st.textContent = '';
     showError(err.message);
@@ -1066,7 +1066,7 @@ $('saveGoalBtn').addEventListener('click', async () => {
     $('goalFileSelect').dataset.key = '';
     setGoal(r.goal_id);
     $('nlStatus').textContent = '';
-    $('goalFileInfo').textContent = `Uloženo do goals/${r.file}.`;
+    $('goalFileInfo').textContent = `Saved to goals/${r.file}.`;
   } catch (err) { showError(err.message); }
 });
 
@@ -1082,7 +1082,7 @@ function resetNewGoal() {
 async function post(path, body) {
   const r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-feed-trainer': '1' }, body: JSON.stringify(body) });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || `Chyba ${r.status}`);
+  if (!r.ok) throw new Error(data.error || `Error ${r.status}`);
   return data;
 }
 
@@ -1103,12 +1103,12 @@ $('startBtn').addEventListener('click', async () => {
     body = { goal: goalFromForm(), live };
   } else {
     const id = $('goalFileSelect').value;
-    if (!id) return showError('Vyber cíl, nebo vytvoř nový.');
+    if (!id) return showError('Pick a goal or create a new one.');
     body = { goal_id: id, live };
   }
   if (live && S.tab !== 'fixture') {
     const real = S.tab === 'new' ? body.goal.account_type === 'real' : S.config?.account_type === 'real';
-    if (real && !confirm('Spustit naplno na skutečném účtu? Agent bude lajkovat, ukládat a vyhledávat pod tvým účtem.')) return;
+    if (real && !confirm('Run in full mode on a real account? The agent will like, save and search as you.')) return;
   }
   $('startBtn').disabled = true;
   try {
