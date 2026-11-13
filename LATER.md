@@ -1,6 +1,6 @@
 # Deferred: decisions and tasks for later
 
-A list of things we have deliberately deferred so they do not get lost. The feature scope by priority (MVP, V2, V3) is in [daily-local-digest.md](daily-local-digest.md); this file holds only open decisions, legal debts and technical follow-ups from the spikes. Spike evidence is stored locally in `.spikes/` (gitignored, contains personal data, never commit).
+A list of things we have deliberately deferred so they do not get lost. The features with their priority and status are in [FEATURES.md](FEATURES.md); this file holds only open decisions, legal debts and technical follow-ups from the spikes. Spike evidence is stored locally in `.spikes/` (gitignored, contains personal data, never commit).
 
 ## Decisions
 

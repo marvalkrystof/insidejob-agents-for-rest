@@ -10,6 +10,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "check:apis": "tsx src/check-apis.ts",
+    "check:features": "tsx src/check-features.ts",
     "collect": "tsx src/pipeline/collect.ts",
     "digest": "tsx src/digest/run.ts",
     "web": "tsx src/web/server.ts"

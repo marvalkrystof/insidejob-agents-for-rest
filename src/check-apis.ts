@@ -122,19 +122,29 @@ const checkFeatherless = async (apiKey: string, model: string): Promise<string> 
 
 const checkTelegram = async (botToken: string): Promise<string> => {
   const baseUrl = `https://api.telegram.org/bot${botToken}`;
-  const me = z.object({ result: z.object({ username: z.string() }) }).parse(await fetchJson(`${baseUrl}/getMe`));
+  const me = z.object({ result: z.object({ id: z.number(), username: z.string() }) }).parse(await fetchJson(`${baseUrl}/getMe`));
   const botName = `@${me.result.username}`;
-  if (readOptionalEnv("TELEGRAM_CHAT_ID")) {
+  const configuredChatId = readOptionalEnv("TELEGRAM_CHAT_ID");
+  // The bot id is the number before ":" in the token, so it is easily mistaken for the chat id.
+  const isBotOwnId = configuredChatId === String(me.result.id);
+  if (configuredChatId && !isBotOwnId) {
     return `${botName}, TELEGRAM_CHAT_ID is set`;
   }
   const updates = z
     .object({ result: z.array(z.object({ message: z.object({ chat: z.object({ id: z.number() }) }).optional() })) })
     .parse(await fetchJson(`${baseUrl}/getUpdates`));
   const chatIds = [...new Set(updates.result.flatMap((update) => (update.message ? [update.message.chat.id] : [])))];
-  if (chatIds.length === 0) {
-    return `${botName} works, but TELEGRAM_CHAT_ID is empty: send any message to ${botName} and run this again`;
+  const nextStep =
+    chatIds.length === 0
+      ? `send any message to ${botName} and run this again`
+      : `put this into TELEGRAM_CHAT_ID: ${chatIds.join(" or ")}`;
+  if (isBotOwnId) {
+    throw new Error(`TELEGRAM_CHAT_ID is ${botName}'s own id, and a bot cannot message itself; ${nextStep}`);
   }
-  return `${botName} works; put this into TELEGRAM_CHAT_ID: ${chatIds.join(" or ")}`;
+  if (chatIds.length === 0) {
+    return `${botName} works, but TELEGRAM_CHAT_ID is empty: ${nextStep}`;
+  }
+  return `${botName} works; ${nextStep}`;
 };
 
 const checkApify = async (token: string): Promise<string> => {

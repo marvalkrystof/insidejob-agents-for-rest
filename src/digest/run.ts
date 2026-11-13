@@ -67,6 +67,8 @@ const main = async (): Promise<void> => {
   loadEnvFileIfPresent();
   const isOffline = process.argv.includes("--offline");
   const isDryRun = process.argv.includes("--dry-run");
+  // Test and demo sends replay the same day; recording them would hide its events and notices from the next send.
+  const shouldRemember = !process.argv.includes("--no-remember");
   const isVerbose = process.argv.includes("--verbose");
   const profile = await loadProfile();
   const now = resolveNow();
@@ -106,13 +108,18 @@ const main = async (): Promise<void> => {
     console.log("\nDry run: not delivered, novelty store unchanged.");
     return;
   }
-  if (await deliverToTelegram(stored)) {
-    await rememberDelivered(
-      stored.entries.map((entry) => entry.itemId),
-      stored.generatedAt,
-    );
-    console.log("\nDelivered to Telegram.");
+  if (!(await deliverToTelegram(stored))) {
+    return;
   }
+  if (!shouldRemember) {
+    console.log("\nDelivered to Telegram (--no-remember: novelty store unchanged).");
+    return;
+  }
+  await rememberDelivered(
+    stored.entries.map((entry) => entry.itemId),
+    stored.generatedAt,
+  );
+  console.log("\nDelivered to Telegram.");
 };
 
 await main();

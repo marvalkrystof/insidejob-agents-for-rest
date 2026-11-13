@@ -2,7 +2,7 @@
 
 Working name: **Domovník** (alternatives: Okolí, Dnes u nás, Radar).
 
-In one sentence: an app that watches everything happening around the user's home, commute and interests, and three times a day (configurable) sends them a short summary of what is relevant to them today, including a concrete action to take.
+In one sentence: a short personal briefing, read first thing in the morning or in bed the night before, that tells the user what matters today or tomorrow in their household, building, street, neighbourhood and town, how the commute will go and what they could do in their free time, each point with a concrete action and a source.
 
 Document status: outcome of the brainstorm and the validation spikes (section 7). Claims marked **(verified)** are based on source research or live requests; claims marked **(unverified)** must be verified before implementation. Deferred decisions, legal debts and follow-ups are in [LATER.md](LATER.md).
 
@@ -25,6 +25,7 @@ No existing tool combines this into one personal overview for a specific address
 
 Domovník acts as a personal "building caretaker and secretary" for the place where a person lives:
 
+- **Read at one moment.** One briefing first thing in the morning for today, or in bed the night before for tomorrow. It moves outward through the reader's circles: household, home and building, street, neighbourhood, town, commute, free time.
 - **Proactive.** The system asks, not the user: "Tomorrow at 8 you will have no water and there is a disruption on your route, leave 25 minutes earlier."
 - **Local.** It knows the home address, municipality, region, commute route and interests.
 - **Actionable.** Every item contains a next step (link to tickets, recommended departure time, where to park, whom to call).
@@ -87,155 +88,9 @@ Note: scraping ticket sellers is subject to their terms. In the MVP a link to th
 - sources: RSS, news websites, local media
 - the LLM filters by topic and **novelty** (it only deals with what has changed since the last digest)
 
-### 3.6 Extra ideas (selected by importance to the user)
-
-- weather with an impact on plans (rain during the trip home, frost and recommendations)
-- pollen and air quality for allergy sufferers
-- pharmacies, emergency services and appointments (e.g. free vaccination slots)
-- collection days, bulky waste collection
-- construction work and pavement closures near the home
-- calendar of public holidays and shop opening restrictions
-- fuel prices along the route
-- planned internet and mobile operator outages
-- school and kindergarten closures, timetable changes
-- barrier-free mode: barrier-free events, lift outages, step-free routes
-
 ## 4. Features
 
-Priority: **MVP** (hackathon, 5 hours), **V2** (after the hackathon), **V3** (vision).
-
-### 4.1 Profile and configuration
-
-| Feature | Priority |
-|---|---|
-| Entering the home address (geocoding, selecting the municipality, region, district) | MVP |
-| Entering the work address and departure time, route calculation | MVP |
-| Module selection (on and off) | MVP |
-| Entering interests as free text | MVP |
-| Entering the SVJ name and how information is passed on (forwarding emails, photo of the building bulletin board) | V2 |
-| Alert sensitivity (urgent only, everything important, everything) | V2 |
-| Quiet hours and days | V2 |
-| Multiple profiles (home, cottage, parents) | V3 |
-| Shared household profile | V3 |
-
-Example profile (schema for implementation):
-
-```yaml
-user:
-  language: en
-home:
-  address: "Street 12, Kladno"
-  municipality: "Kladno"
-  building: { type: panelak, svj: "SVJ Street 12" }
-commute:
-  to: "Company, Praha 7"
-  depart: "07:30"
-  days: [mon, tue, wed, thu, fri]
-  mode: park_and_ride   # car | transit | bike | park_and_ride (car to a P+R, then public transport)
-interests: ["e-mobility", "stand-up", "FC Zbrojovka"]
-modules:
-  municipality_board: true
-  utilities_outages: true
-  traffic: true
-  parking: true
-  events: true
-  community_groups: ["<public group url>"]
-  news_topics: true
-digest:
-  schedule:
-    morning: "06:30"
-    noon: null
-    evening: "18:00"
-  weekly: { day: sun, time: "18:00" }
-  monthly: { day: 1, time: "08:00" }
-  channel: [telegram, web]
-  sensitivity: important   # urgent | important | all
-  quiet_hours: "22:00-06:00"
-```
-
-### 4.2 Summary delivery
-
-| Feature | Priority |
-|---|---|
-| Morning summary (one, configurable time) | MVP |
-| Up to 3 summaries a day (morning, noon, evening) | V2 |
-| Weekly summary (upcoming outages, weekend events, changes in the municipality) | V2 |
-| Monthly summary (what changed in the municipality, construction, council decisions, budget) | V3 |
-| Immediate urgent alert outside the schedule (e.g. a disruption on the route 30 minutes before departure) | V2 |
-| Channels: Telegram bot | MVP |
-| Channels: web overview | MVP |
-| Channels: email | V2 |
-| Channels: iCal feed, push notifications | V3 |
-| One-sentence summary on a "quiet day" | V2 |
-
-### 4.3 Traffic and route
-
-| Feature | Priority |
-|---|---|
-| Disruptions, closures and accidents on the route | MVP |
-| Delay estimate and recommended departure time ("leave 20 minutes earlier") | MVP |
-| Alternative route or switching to public transport | V2 |
-| Lift and escalator outages in public transport for people with reduced mobility | V3 |
-| Taking events at the destination (concert, match) into account in traffic and parking estimates | V2 |
-
-### 4.4 Parking
-
-See section 5. Available both as a standalone MCP server and as a digest module.
-
-### 4.5 Home, SVJ and municipality
-
-| Feature | Priority |
-|---|---|
-| Notice board of one pilot municipality with LLM extraction of "what concerns me" | MVP |
-| Planned electricity outages by address | MVP |
-| Water and gas outages for the pilot area | V2 |
-| Receiving SVJ emails by forwarding them to a dedicated mailbox | V2 |
-| Photo of the building bulletin board, vision OCR, extraction of dates into a calendar | V2 |
-| Waste collection and calendar | V2 |
-| Building proceedings and zoning plan changes within X metres of the home | V3 |
-
-### 4.5a Events and tickets
-
-| Feature | Priority |
-|---|---|
-| Events nearby matching the user's interests | MVP |
-| Ticket purchase link for every event | MVP |
-| "Pre-sale starts" and "few seats left" alerts (if the source has the data) | V3 |
-| Composing the day: event, transport, parking, dinner | V3 |
-
-### 4.6 Community
-
-| Feature | Priority |
-|---|---|
-| Public Facebook groups: lost and found pets and items nearby | V2 (in the MVP only with one fixed group and backed-up data) |
-| Photo matching: the user uploads a photo of their pet and the system alerts them to similar found animals | V3 |
-| Local warnings (outages, car thefts, dangerous intersections) | V3 |
-
-### 4.7 Interests and news
-
-| Feature | Priority |
-|---|---|
-| News on the entered topics with a novelty filter | V2 |
-| Summary "what is new since last time" instead of a list of links | V2 |
-
-### 4.8 Quality and trust
-
-| Feature | Priority |
-|---|---|
-| Every item has a source, a link and a fetch time | MVP |
-| Confidence score (verified source vs. estimate from free text) | MVP |
-| Explanation of why an item is shown ("because you live at X") | V2 |
-| Feedback (useful, not useful) and relevance learning | V2 |
-| Duplicate detection across sources | MVP |
-
-### 4.9 Privacy
-
-| Feature | Priority |
-|---|---|
-| The address is stored minimally (municipality, street, possibly rounded coordinates) | MVP |
-| No storing of names and personal data from community groups, only summaries | MVP |
-| Deleting all data in one step | V2 |
-| Local mode (processing without an account) | V3 |
+The features, their priority (MVP, V2, V3, idea) and their status are in [FEATURES.md](FEATURES.md).
 
 ## 5. Parking MCP
 
@@ -243,17 +98,7 @@ Goal: an agent (e.g. Claude) can answer "Where do I park at my destination and h
 
 Apify offers a hosted MCP server and allows exposing Actors as tools (verified: `https://mcp.apify.com`, tool selection via the `tools` parameter). Parking MCP is a custom server on top of Actors and open data.
 
-### Tools
-
-| Tool | Input | Output |
-|---|---|---|
-| `find_parking_near` | destination (address or coordinates), arrival time, max. walking distance, type (street, garage, P+R), constraints (disabled parking (ZTP), EV charging) | list of spots with distance, price, availability estimate |
-| `get_parking_tariff` | place, date and time | tariff, zone, max. duration, exceptions |
-| `get_pr_occupancy` | P+R car park ID | current and historical occupancy (if available) |
-| `estimate_parking_difficulty` | destination, time | score from 0 to 100 based on time of day, nearby events, occupancy and history |
-| `get_nearby_events` | destination, time | events that make parking harder (concert, match) |
-| `suggest_park_and_ride` | destination, arrival time | P+R and public transport combination with total time and price |
-| `get_parking_restrictions` | place, date | restrictions (street cleaning, closures, temporary parking bans) |
+The tools and their status are in [FEATURES.md](FEATURES.md) (Platform).
 
 ### Parking data sources
 
@@ -262,8 +107,6 @@ Apify offers a hosted MCP server and allows exposing Actors as tools (verified: 
 - **PID incidents and disruptions:** the RSS feeds `pid.cz/feed/rss-vyluky` and `rss-mimoradnosti` and the GTFS-RT `alerts.pb` on Golemio work without a key (verified).
 - **Other cities:** nothing found, to be checked (Brno, Ostrava, Plzeň and other city open data portals) **(unverified)**.
 - **Fallback:** OpenStreetMap for car park locations, tariffs from city websites, difficulty estimated by a heuristic (time of day, nearby events).
-
-Design note: every tool returns a `confidence` field (live data / historical / estimate) so the agent does not pretend to a certainty it does not have.
 
 ## 6. Architecture
 
@@ -351,28 +194,14 @@ Overall verdict: **no blocker prevents the MVP in the Kladno → Praha 7 pilot i
 
 ## 8. Creative directions and "wow" elements
 
-Features that show more than aggregation suit both the demo and the vision:
-
-- **"Departure time" instead of a list.** The summary does not end with information about a disruption but with a sentence: "Leave at 7:05, not 7:30. Park at P+R X, that makes it 12 minutes faster."
-- **Composing the day.** Cinema at 19:00 + transport + parking + tickets in one "Tonight" block.
-- **Lost pet matching by photo.** The user uploads a photo, the system watches community reports of found animals and alerts them to a similar animal nearby.
-- **Predicting problems.** "In 9 days your building will have a water outage, and the same week there is a disruption on your route."
-- **Changes since last time.** A monthly summary "what changed in your municipality" (resolutions, construction, zoning plan) in plain language.
-- **Story of the day.** The opening sentence of the summary sets the context: "Today is a quiet day, just one thing: a concert in the centre tonight, expect parking to be harder."
-- **Household as a team.** A shared summary for the family (who picks up the kids, who will be at home during the outage).
-- **Accessibility layer.** A toggle for people with reduced mobility: barrier-free events, lift outages, step-free routes.
-- **Agent layer.** The user can ask: "Where can I go with the kids on Saturday if it rains and I have 500 CZK?" The agent uses the same data and tools (including Parking MCP).
+The creative directions (departure time instead of a list, story of the day, composing the day, predicting problems, household as a team, accessibility layer, agent layer) are features in [FEATURES.md](FEATURES.md).
 
 ## 9. MVP for the hackathon (5 hours, 3 people, 3-minute demo)
 
 ### Scope
 
 - **One pilot and one profile** (`profile/demo-profile.json`): a commuter who lives in Kladno, drives to a Prague P+R (Zličín or Nové Butovice) by 08:00 on weekdays and continues by metro B/C to Praha 7 – Holešovice. Digest and demo in English.
-- **Phase A, solo proof of concept (built):** `yarn collect && yarn digest` produces a morning digest from live data.
-  - Seven collectors: ČEZ outages by address, opravujeme.to (Prague closures), KSÚS (Central Bohemian roads), PID disruption RSS, GoOut (Kladno events), Bio Oko (Praha 7 screenings), the Kladno notice board.
-  - Departure time from TomTom Routing (`arriveAt`); the digest picks the fastest P+R that usually still has at least 15 free spaces at arrival (Golemio average occupancy) and reports the free spaces now alongside.
-  - Hard filters (time window, 300 m route corridor, metro lines B/C, home outage, evenings and weekends), then a LangGraph.js graph: notice extraction (LLM), deterministic selection, composition with `[n]` citations (LLM).
-  - Output: a Telegram bot message and a web overview (`yarn web`); `--offline` runs over saved fixtures.
+- **Phase A, solo proof of concept (built):** `yarn collect && yarn digest` produces a morning digest from live data; what each part does and its status is in [FEATURES.md](FEATURES.md).
 - **Phase B, team of three (if the team picks Domovník):** Parking MCP and an agent, one Apify Actor for collection, a Facebook fixture, web polish and the demo.
 - **Not in the MVP** (roadmap and [LATER.md](LATER.md)): live Facebook, NDIC, OCR of notice-board attachments, water and gas, SVJ, weekly and monthly summaries, more profiles, hosting on Apify, Praha 7 events via GoOut.
 
@@ -410,7 +239,7 @@ Fallback: `--offline` over fixtures and a recorded video.
 
 ## 10. Open questions for the team
 
-Decided: Kladno → Praha 7 pilot (section 9), Telegram + web overview as channels (section 4.2), community groups as a bonus with fixture data (risk B1). Open questions and deferred decisions are in [LATER.md](LATER.md).
+Decided: Kladno → Praha 7 pilot (section 9), Telegram + web overview as channels ([FEATURES.md](FEATURES.md)), community groups as a bonus with fixture data (risk B1). Open questions and deferred decisions are in [LATER.md](LATER.md).
 
 ## 11. Research sources
 
