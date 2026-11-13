@@ -7,7 +7,11 @@ export type FlatRatePercent = 80 | 60 | 40 | 30;
 export type Input = {
     taxYear: string;
     activityType: ActivityType;
-    income: number;
+    income?: number;
+    invoiceFiles?: string[];
+    fakturoidClientId?: string;
+    fakturoidClientSecret?: string;
+    bankStatementFiles?: string[];
     expenseMode: 'flatRate' | 'actual';
     flatRatePercent?: `${FlatRatePercent}`;
     actualExpenses?: number;

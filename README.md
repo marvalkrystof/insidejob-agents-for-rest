@@ -17,6 +17,16 @@ You enter your numbers and the Actor returns every form row you need to fill in.
 - **LLM only for your questions.** If you add notes, an open-weight model on [Featherless](https://featherless.ai) (`Qwen/Qwen3.8-27B`) answers them only from the approved rows and calculation trace, cites rows, and flags situations the tool doesn't support.
 - **No personal data.** Name, rodné číslo, DIČ, address and bank account are never collected. You fill those in yourself.
 
+## Filling in the numbers for you
+
+Instead of typing the numbers, you can let the Actor find them:
+
+- **Income from invoices (PDF):** upload the invoices you issued. AI on Featherless reads the printed amounts, then code checks them (amount without VAT + VAT = total) and adds up the invoices issued in the tax year. Invoices due in the next year are flagged. Scanned invoices without a text layer can't be read.
+- **Income from Fakturoid:** paste the Client ID and Client Secret from Fakturoid (Settings → User account). The Actor reads your invoices through the Fakturoid API v3, read-only, and counts each one by the day it was paid (`paid_on`). No AI is involved.
+- **ČSSZ and VZP advances from bank statements:** upload CSV or PDF statements. Code (no AI) finds payments to ČSSZ pension accounts (`01011-…/0710`) and VZP accounts (`111…/0710`), or payments that name ČSSZ, OSSZ or VZP. It skips sickness insurance (`11017-…`) and sums the payments dated in the tax year.
+
+A typed number always wins over a found one. The report's **Your documents** section lists every invoice and payment it used, with anything that needs a manual check. ČSSZ and VZP offer no API for third-party apps, so the bank statement is the way to avoid typing the advances.
+
 ## Supported scope (tax year 2025)
 
 Full-year OSVČ with only §7 business income, main (hlavní) or secondary (vedlejší) activity, flat-rate (paušální) or actual expenses, sleva na poplatníka, children claimed for the whole year, health insurer VZP.
@@ -50,5 +60,7 @@ The Q&A needs `FEATHERLESS_API_KEY` (from https://featherless.ai/account/api-key
 2. Add golden test cases for the year.
 3. Register the year in `src/main.ts` and in the `taxYear` enum in the input schema.
 4. Merge only after reviewing the diff against the previous year.
+
+Fakturoid requests send the User-Agent `OSVC Forms Helper (<contact>)` that Fakturoid requires (`src/fakturoid.ts`).
 
 Roadmap: automated draft of the next year's file (scrape the official forms, LLM draft, human approval), odpočty, other health insurers, EPO XML export, calendar export.

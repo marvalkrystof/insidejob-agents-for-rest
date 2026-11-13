@@ -2,6 +2,7 @@ import { Actor, log } from 'apify';
 
 import { askLlm } from './ask-llm.ts';
 import { calculate } from './calculate.ts';
+import { collectDocuments } from './documents.ts';
 import { buildHtml, buildRows } from './report.ts';
 import type { Input, YearParams } from './types.ts';
 import { params2025 } from './years/2025.ts';
@@ -19,8 +20,22 @@ if (input.expenseMode === 'actual' && input.actualExpenses === undefined) {
     throw new Error('Actual expenses were selected, but "actualExpenses" is missing.');
 }
 
+const documents = await collectDocuments(input, params.year);
+const income = input.income ?? documents.invoiceIncome;
+if (income === undefined) {
+    throw new Error(['Enter your income (step 3), upload your invoices or connect Fakturoid.', ...documents.errors]
+        .join(' '));
+}
+
+const resolvedInput = {
+    ...input,
+    income,
+    socialAdvancesPaid: input.socialAdvancesPaid ?? documents.socialPaid,
+    healthAdvancesPaid: input.healthAdvancesPaid ?? documents.healthPaid,
+};
+
 const language = input.language ?? 'en';
-const calculation = calculate(input, params);
+const calculation = calculate(resolvedInput, params);
 if ((calculation.tax.profit ?? 0) < 0) {
     log.warning('Your expenses exceed your income (ztráta). Loss carry-forward is not supported, '
         + 'the tax rows treat it as 0.');
@@ -30,8 +45,8 @@ const rows = buildRows(params, calculation, language);
 const answer = input.notes?.trim() ? await askLlm(input.notes, params, calculation, language) : null;
 
 await Actor.pushData(rows);
-await Actor.setValue('CALCULATION', { year: params.year, ...calculation, answer });
-await Actor.setValue('OUTPUT', buildHtml(params, calculation, rows, language, input.notes, answer), {
+await Actor.setValue('CALCULATION', { year: params.year, ...calculation, documents, answer });
+await Actor.setValue('OUTPUT', buildHtml(params, calculation, rows, language, input, documents, answer), {
     contentType: 'text/html',
 });
 

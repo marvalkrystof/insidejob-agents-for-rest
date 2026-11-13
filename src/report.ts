@@ -1,4 +1,5 @@
-import type { Calculation, FormId, Language, RowDef, YearParams } from './types.ts';
+import type { Documents } from './documents.ts';
+import type { Calculation, FormId, Input, Language, RowDef, YearParams } from './types.ts';
 
 export type ReportRow = {
     form: FormId;
@@ -61,6 +62,32 @@ const EN = {
     disclaimer: 'Calculated from the officially published rules for this year, with a source for every row. '
         + 'It is not tax advice: check the values before you submit, and ask a daňový poradce if your situation '
         + 'is outside the supported scope.',
+    documents: 'Your documents',
+    whereFrom: 'Where your numbers came from',
+    income: 'Income',
+    csszPaid: 'ČSSZ advances paid',
+    vzpPaid: 'VZP advances paid',
+    fromYou: 'typed by you',
+    fromInvoices: (counted: number, all: number): string => `from ${counted} of ${all} invoices`,
+    fromStatement: (count: number): string => `from ${count} payments in your bank statement`,
+    notProvided: 'not provided, counted as 0',
+    invoices: 'Invoices',
+    invoicesNote: 'Amounts from PDFs were read by AI and checked by code (amount without VAT + VAT = total). '
+        + 'Fakturoid invoices count by the day they were paid. Check the list against your records.',
+    payments: 'Payments to ČSSZ and VZP found in your bank statement',
+    paymentsNote: 'Bank statements are read by code only and are never sent to AI.',
+    problems: 'Could not be read',
+    colFile: 'File',
+    colNumber: 'Number',
+    colIssued: 'Issued',
+    colPaid: 'Paid / due',
+    colTotal: 'Total',
+    colIncome: 'Counted as income',
+    colCheck: 'Check',
+    colDate: 'Date',
+    colOffice: 'To',
+    colAmount: 'Amount',
+    notCounted: 'not counted',
 };
 
 const UI: Record<Language, typeof EN> = {
@@ -99,6 +126,32 @@ const UI: Record<Language, typeof EN> = {
         disclaimer: 'Spočítáno podle oficiálně zveřejněných pravidel pro daný rok, u každého řádku je zdroj. '
             + 'Nejde o daňové poradenství: hodnoty před podáním zkontrolujte a pokud vaše situace přesahuje '
             + 'podporovaný rozsah, obraťte se na daňového poradce.',
+        documents: 'Vaše doklady',
+        whereFrom: 'Odkud se vzala čísla',
+        income: 'Příjmy',
+        csszPaid: 'Zaplacené zálohy ČSSZ',
+        vzpPaid: 'Zaplacené zálohy VZP',
+        fromYou: 'zadali jste ručně',
+        fromInvoices: (counted: number, all: number): string => `z ${counted} z ${all} faktur`,
+        fromStatement: (count: number): string => `z ${count} plateb ve výpisu z účtu`,
+        notProvided: 'nezadáno, počítá se 0',
+        invoices: 'Faktury',
+        invoicesNote: 'Částky z PDF přečetla AI a kód je zkontroloval (základ + DPH = celkem). Faktury z Fakturoidu '
+            + 'se počítají podle data úhrady. Seznam si porovnejte se svou evidencí.',
+        payments: 'Platby ČSSZ a VZP nalezené ve výpisu z účtu',
+        paymentsNote: 'Výpisy z účtu čte jen kód, nikdy se neposílají AI.',
+        problems: 'Nepodařilo se přečíst',
+        colFile: 'Soubor',
+        colNumber: 'Číslo',
+        colIssued: 'Vystaveno',
+        colPaid: 'Uhrazeno / splatnost',
+        colTotal: 'Celkem',
+        colIncome: 'Započteno do příjmů',
+        colCheck: 'Zkontrolujte',
+        colDate: 'Datum',
+        colOffice: 'Komu',
+        colAmount: 'Částka',
+        notCounted: 'nezapočteno',
     },
 };
 
@@ -192,6 +245,78 @@ const summaryCard = (
         </a>`;
 };
 
+const documentsSection = (calculation: Calculation, input: Input, documents: Documents, ui: typeof EN): string => {
+    const { invoices, payments, errors } = documents;
+    const offices = { cssz: 'ČSSZ', vzp: 'VZP' };
+    const countedPayments = (office: 'cssz' | 'vzp'): number => payments
+        .filter((payment) => payment.office === office && payment.counted).length;
+    const paidSource = (typed: number | undefined, found: number | undefined, office: 'cssz' | 'vzp'): string => (
+        typed !== undefined
+            ? ui.fromYou
+            : found !== undefined ? ui.fromStatement(countedPayments(office)) : ui.notProvided
+    );
+    const flags = (items: string[]): string => items
+        .map((flag) => `<span class="flag">${escapeHtml(flag)}</span>`)
+        .join('');
+
+    const invoiceTable = invoices.length ? `
+        <h3>${ui.invoices}</h3>
+        <p class="muted small">${escapeHtml(ui.invoicesNote)}</p>
+        <div class="scroll"><table>
+            <thead><tr><th>${ui.colFile}</th><th>${ui.colNumber}</th><th>${ui.colIssued}</th><th>${ui.colPaid}</th>
+                <th class="num">${ui.colTotal}</th><th class="num">${ui.colIncome}</th>
+                <th>${ui.colCheck}</th></tr></thead>
+            <tbody>${invoices.map((invoice) => `
+                <tr class="${invoice.counted ? '' : 'off'}">
+                    <td>${escapeHtml(invoice.source)}</td><td>${escapeHtml(invoice.number)}</td>
+                    <td>${escapeHtml(invoice.issuedOn)}</td>
+                    <td>${escapeHtml(invoice.paidOn ?? invoice.dueOn ?? '')}</td>
+                    <td class="num">${formatKc(invoice.total)}</td>
+                    <td class="num">${invoice.counted ? formatKc(invoice.income) : ui.notCounted}</td>
+                    <td>${flags(invoice.flags)}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table></div>` : '';
+
+    const paymentTable = payments.length ? `
+        <h3>${ui.payments}</h3>
+        <p class="muted small">${escapeHtml(ui.paymentsNote)}</p>
+        <div class="scroll"><table>
+            <thead><tr><th>${ui.colDate}</th><th>${ui.colOffice}</th><th class="num">${ui.colAmount}</th>
+                <th>${ui.colFile}</th><th>${ui.colCheck}</th></tr></thead>
+            <tbody>${payments.map((payment) => `
+                <tr class="${payment.counted ? '' : 'off'}">
+                    <td>${escapeHtml(payment.date ?? '?')}</td><td>${offices[payment.office]}</td>
+                    <td class="num">${payment.counted ? formatKc(payment.amount) : ui.notCounted}</td>
+                    <td>${escapeHtml(payment.source)}</td><td>${flags(payment.flags)}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table></div>` : '';
+
+    return `
+    <section id="documents">
+        <h2>${ui.documents}</h2>
+        <div class="panel">
+            <h3>${ui.whereFrom}</h3>
+            <ul class="sources">
+                <li><span>${ui.income}</span><strong>${formatKc(calculation.tax.income ?? 0)}</strong>
+                    <span class="muted">${input.income !== undefined ? ui.fromYou
+                        : ui.fromInvoices(invoices.filter((i) => i.counted).length, invoices.length)}</span></li>
+                <li><span>${ui.csszPaid}</span><strong>${formatKc(calculation.social.socialAdvancesPaid ?? 0)}</strong>
+                    <span class="muted">${paidSource(input.socialAdvancesPaid, documents.socialPaid, 'cssz')}
+                    </span></li>
+                <li><span>${ui.vzpPaid}</span><strong>${formatKc(calculation.health.healthAdvancesPaid ?? 0)}</strong>
+                    <span class="muted">${paidSource(input.healthAdvancesPaid, documents.healthPaid, 'vzp')}</span></li>
+            </ul>
+            ${errors.length ? `<h3>${ui.problems}</h3><ul>${errors
+                .map((error) => `<li class="flag-text">${escapeHtml(error)}</li>`)
+                .join('')}</ul>` : ''}
+            ${invoiceTable}
+            ${paymentTable}
+        </div>
+    </section>`;
+};
+
 const rowHtml = (row: ReportRow, ui: typeof EN): string => `
     <article class="row${KEY_ROWS.has(row.key) ? ' key' : ''}">
         <div class="row-head">
@@ -213,10 +338,14 @@ export const buildHtml = (
     calculation: Calculation,
     rows: ReportRow[],
     language: Language,
-    notes: string | undefined,
+    input: Input,
+    documents: Documents,
     answer: string | null,
 ): string => {
     const ui = UI[language];
+    const { notes } = input;
+    const hasDocuments = Boolean(input.invoiceFiles?.length || input.bankStatementFiles?.length
+        || input.fakturoidClientId || documents.errors.length);
     const { tax, social, health } = calculation;
     const healthBalance = health.healthBalance ?? 0;
 
@@ -318,10 +447,25 @@ export const buildHtml = (
         border-bottom: 1px solid var(--border); }
     .date { font-weight: 700; }
     footer { margin-top: 32px; font-size: 13px; color: var(--muted); }
+    h3 { font-size: 16px; margin: 18px 0 4px; }
+    .sources { list-style: none; padding: 0; margin: 0; }
+    .sources li { display: grid; grid-template-columns: 200px 140px 1fr; gap: 12px; padding: 6px 0;
+        border-bottom: 1px solid var(--border); }
+    .sources strong { text-align: right; font-variant-numeric: tabular-nums; }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr.off td { color: var(--muted); }
+    .flag { display: block; color: var(--pay); }
+    .flag-text { color: var(--pay); }
     @media (max-width: 640px) {
         .row-head { grid-template-columns: auto 1fr; }
         .value { grid-column: 1 / -1; }
         .timeline li { grid-template-columns: 1fr; gap: 2px; }
+        .sources li { grid-template-columns: 1fr auto; }
+        .sources .muted { grid-column: 1 / -1; }
     }
 </style>
 </head>
@@ -333,6 +477,7 @@ export const buildHtml = (
 <nav><div>
     <a href="#summary">${ui.summary}</a>
     <a href="#answer">${ui.answerNav}</a>
+    ${hasDocuments ? `<a href="#documents">${ui.documents}</a>` : ''}
     ${FORMS.map((form) => `<a href="#${form}">${escapeHtml(ui.forms[form])}</a>`).join('')}
     <a href="#deadlines">${ui.deadlines}</a>
 </div></nav>
@@ -359,6 +504,7 @@ export const buildHtml = (
         <h2>${ui.answerNav}</h2>
         <div class="panel ai">${answerBody}</div>
     </section>
+    ${hasDocuments ? documentsSection(calculation, input, documents, ui) : ''}
     ${formSections}
     <section id="deadlines">
         <h2>${ui.deadlines}</h2>

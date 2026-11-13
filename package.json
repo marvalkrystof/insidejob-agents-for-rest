@@ -14,7 +14,8 @@
         "test": "node --test \"test/**/*.test.ts\""
     },
     "dependencies": {
-        "apify": "^3.7.2"
+        "apify": "^3.7.2",
+        "unpdf": "^2.1.0"
     },
     "devDependencies": {
         "@types/node": "^22.20.5",

@@ -1,6 +1,6 @@
 {
     "title": "OSVČ Forms Helper input",
-    "description": "Answer a few questions about your business year and you get every row of the tax return (daňové přiznání), the ČSSZ přehled and the VZP přehled filled in and explained. Have these ready: how much your business earned, how you count expenses, and how much you paid to ČSSZ and VZP during the year (your bank statements, ePortál ČSSZ or Moje VZP show it). Each field below says where to find the number. We never ask for your name, rodné číslo or other personal details.",
+    "description": "Answer a few questions about your business year and you get every row of the tax return (daňové přiznání), the ČSSZ přehled and the VZP přehled filled in and explained. You can type the numbers, or let the Actor find them: upload your invoices or connect Fakturoid for your income, and upload your bank statements for what you paid to ČSSZ and VZP. We never ask for your name, rodné číslo or other personal details.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
@@ -9,7 +9,9 @@
             "type": "string",
             "description": "The year you earned the money. For income earned in 2025 you file in spring 2026.",
             "editor": "select",
-            "enum": ["2025"],
+            "enum": [
+                "2025"
+            ],
             "default": "2025"
         },
         "activityType": {
@@ -17,7 +19,10 @@
             "type": "string",
             "description": "Choose 'side activity' only if for the whole year you also had another status, for example: you were employed, a student under 26, received a pension, were on maternity or parental leave, or cared for a dependent person. Otherwise choose 'main activity'. Not sure? Check what you ticked on last year's ČSSZ přehled (row 13).",
             "editor": "select",
-            "enum": ["main", "secondary"],
+            "enum": [
+                "main",
+                "secondary"
+            ],
             "enumTitles": [
                 "Main activity: the business is my main job (hlavní činnost)",
                 "Side activity: I was also employed, studying, retired or on parental leave (vedlejší činnost)"
@@ -27,18 +32,39 @@
         "income": {
             "title": "3. How much did your business earn in the year? (příjmy)",
             "type": "integer",
-            "description": "All the money your customers actually paid you for your business during the year, before subtracting any costs or taxes. Add up the paid invoices in your invoicing app or the incoming payments on your bank statements. If you are a VAT payer (plátce DPH), use the amounts without VAT.",
+            "description": "All the money your customers actually paid you for your business during the year, before subtracting any costs or taxes. VAT payers (plátce DPH): use amounts without VAT. Leave empty if you upload your invoices (step 4) or connect Fakturoid (step 5): the Actor then adds them up for you. If you fill it in, your number wins.",
             "editor": "number",
             "unit": "Kč",
-            "minimum": 0,
-            "prefill": 900000
+            "minimum": 0
+        },
+        "invoiceFiles": {
+            "title": "4. Or upload the invoices you issued (PDF)",
+            "type": "array",
+            "description": "Upload all invoices you issued to customers for the year (one PDF per invoice). AI reads the amounts and the code checks them; the report lists every invoice so you can verify it. Invoices issued in the year are counted. Scanned paper invoices without text can't be read. Note: the invoice text is sent to the AI service (Featherless) to read it.",
+            "editor": "fileupload"
+        },
+        "fakturoidClientId": {
+            "title": "5. Or connect Fakturoid: Client ID",
+            "type": "string",
+            "description": "If you invoice in Fakturoid, the Actor can read your invoices directly and count each one by the day it was paid. In Fakturoid go to Settings → User account (Nastavení → Uživatelský účet) and copy the Client ID and Client Secret from the API section. The Actor only reads invoices, it never changes anything.",
+            "editor": "textfield"
+        },
+        "fakturoidClientSecret": {
+            "title": "6. Fakturoid Client Secret",
+            "type": "string",
+            "description": "The Client Secret from the same Fakturoid page. It is stored encrypted.",
+            "editor": "textfield",
+            "isSecret": true
         },
         "expenseMode": {
-            "title": "4. How do you count your business costs? (výdaje)",
+            "title": "7. How do you count your business costs? (výdaje)",
             "type": "string",
             "description": "Most freelancers use the fixed percentage: you don't need receipts, a set share of your income counts as your costs. Choose real costs only if you keep records of all business costs (daňová evidence) and they are higher than the percentage.",
             "editor": "select",
-            "enum": ["flatRate", "actual"],
+            "enum": [
+                "flatRate",
+                "actual"
+            ],
             "enumTitles": [
                 "A fixed percentage of my income, no receipts needed (paušální výdaje)",
                 "My real costs from receipts and records (skutečné výdaje)"
@@ -46,11 +72,16 @@
             "default": "flatRate"
         },
         "flatRatePercent": {
-            "title": "5. Which percentage applies to you? (only for the fixed percentage)",
+            "title": "7a. Which percentage applies to you? (only for the fixed percentage)",
             "type": "string",
             "description": "It depends on your trade licence. Look it up in the trade register (výpis z živnostenského rejstříku): a craft trade (řemeslná živnost) is 80 %, any other trade licence (volná, vázaná or koncesovaná živnost) is 60 %. Not sure and you have a trade licence? It is most likely 60 %. Each percentage has a maximum: 1 600 000 / 1 200 000 / 800 000 / 600 000 Kč of costs.",
             "editor": "select",
-            "enum": ["80", "60", "40", "30"],
+            "enum": [
+                "80",
+                "60",
+                "40",
+                "30"
+            ],
             "enumTitles": [
                 "80 % – craft trades (e.g. plumber, electrician, hairdresser) and farming",
                 "60 % – all other trade licences (e.g. IT services, consulting, sales, marketing)",
@@ -60,41 +91,45 @@
             "default": "60"
         },
         "actualExpenses": {
-            "title": "6. Your real business costs (only for real costs)",
+            "title": "7b. Your real business costs (only for real costs)",
             "type": "integer",
-            "description": "Fill in only if you chose 'my real costs' in step 4: the total of all your business costs for the year from your records (daňová evidence). Leave empty otherwise.",
+            "description": "Fill in only if you chose 'my real costs' in step 7: the total of all your business costs for the year from your records (daňová evidence). Leave empty otherwise.",
             "editor": "number",
             "unit": "Kč",
             "minimum": 0
         },
         "childrenCount": {
-            "title": "7. How many children do you claim the child tax benefit for?",
+            "title": "7c. How many children do you claim the child tax benefit for?",
             "type": "integer",
             "description": "Children who lived with you all year and whom you support: under 18, or up to 26 if still studying. Only one parent can claim a child, so if your partner already claims them (e.g. through their employer), enter 0. No children: leave 0.",
             "editor": "number",
             "minimum": 0,
             "default": 0
         },
+        "bankStatementFiles": {
+            "title": "8. Upload your bank statements to fill in the ČSSZ and VZP payments",
+            "type": "array",
+            "description": "Upload the statements of the account you pay ČSSZ and VZP from, covering the whole year: a CSV export (best) or PDF statements from your internet banking. The Actor finds the payments to ČSSZ and VZP and adds them up, so you can leave steps 9 and 10 empty. Statements are read by code only and never sent to AI.",
+            "editor": "fileupload"
+        },
         "socialAdvancesPaid": {
-            "title": "8. How much did you pay to ČSSZ (social security) for the year?",
+            "title": "9. How much did you pay to ČSSZ (social security) for the year?",
             "type": "integer",
-            "description": "Add up all the monthly payments to your local social security office (OSSZ) for the months of the year. With a main activity in 2025 it was at least 4 759 Kč a month (57 108 Kč for the whole year). You find it in your bank statements or in ePortál ČSSZ. Don't include any extra payment you made for the previous year (doplatek). Paid nothing (e.g. small side activity)? Leave 0.",
+            "description": "Add up all the monthly payments to your local social security office (OSSZ) for the months of the year. With a main activity in 2025 it was at least 4 759 Kč a month (57 108 Kč for the whole year). You find it in your bank statements or in ePortál ČSSZ. Don't include any extra payment you made for the previous year (doplatek). Paid nothing (e.g. small side activity)? Enter 0. Leave empty if you uploaded bank statements in step 8.",
             "editor": "number",
             "unit": "Kč",
-            "minimum": 0,
-            "default": 0
+            "minimum": 0
         },
         "healthAdvancesPaid": {
-            "title": "9. How much did you pay to VZP (health insurance) for the year?",
+            "title": "10. How much did you pay to VZP (health insurance) for the year?",
             "type": "integer",
-            "description": "Add up all the monthly payments to VZP for the months of the year, including the December payment made by 8 January. With a main activity in 2025 it was at least 3 143 Kč a month (37 716 Kč for the whole year). You find it in Moje VZP or in your bank statements. Don't include any extra payment for the previous year (doplatek). Paid nothing? Leave 0.",
+            "description": "Add up all the monthly payments to VZP for the months of the year, including the December payment made by 8 January. With a main activity in 2025 it was at least 3 143 Kč a month (37 716 Kč for the whole year). You find it in Moje VZP or in your bank statements. Don't include any extra payment for the previous year (doplatek). Paid nothing? Enter 0. Leave empty if you uploaded bank statements in step 8.",
             "editor": "number",
             "unit": "Kč",
-            "minimum": 0,
-            "default": 0
+            "minimum": 0
         },
         "taxAdvancesPaid": {
-            "title": "10. Did you pay income tax in advance? (zálohy na daň)",
+            "title": "11. Did you pay income tax in advance? (zálohy na daň)",
             "type": "integer",
             "description": "Almost every freelancer leaves this at 0. Advance tax payments only apply if your previous year's income tax was over 30 000 Kč and the tax office expected you to pay part of it during the year. If you did, enter the total you paid.",
             "editor": "number",
@@ -103,20 +138,30 @@
             "default": 0
         },
         "notes": {
-            "title": "11. Anything you want explained? (optional)",
+            "title": "12. Anything you want explained? (optional)",
             "type": "string",
             "description": "Ask in your own words, e.g. 'Why is my health insurance higher than I expected?' or 'I started my business in March, does that change anything?'. Also mention anything unusual about your year and the tool will tell you if it can't handle it. The answer only explains, it never changes the numbers. Don't write your name, rodné číslo or other personal details.",
             "editor": "textarea"
         },
         "language": {
-            "title": "12. Language of the explanations",
+            "title": "13. Language of the explanations",
             "type": "string",
             "description": "The official Czech row names from the forms are always shown too, so you can match them on the official websites.",
             "editor": "select",
-            "enum": ["en", "cs"],
-            "enumTitles": ["English", "Čeština"],
+            "enum": [
+                "en",
+                "cs"
+            ],
+            "enumTitles": [
+                "English",
+                "Čeština"
+            ],
             "default": "en"
         }
     },
-    "required": ["taxYear", "activityType", "income", "expenseMode"]
+    "required": [
+        "taxYear",
+        "activityType",
+        "expenseMode"
+    ]
 }

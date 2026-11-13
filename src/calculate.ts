@@ -4,7 +4,7 @@ const ceilKc = (value: number): number => Math.ceil(Math.round(value * 100) / 10
 
 const floorHundreds = (value: number): number => Math.floor(value / 100) * 100;
 
-export const calculate = (input: Input, params: YearParams): Calculation => {
+export const calculate = (input: Input & { income: number }, params: YearParams): Calculation => {
     const trace: TraceStep[] = [];
     const step = (key: string, value: number, formula: string): number => {
         trace.push({ key, value, formula });
