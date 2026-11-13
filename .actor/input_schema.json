@@ -1,0 +1,128 @@
+{
+    "title": "OSVČ Forms Helper input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "taxYear": {
+            "title": "Tax year",
+            "type": "string",
+            "description": "The year you are filing for. Only years whose parameters were reviewed and approved are available.",
+            "editor": "select",
+            "enum": [
+                "2025"
+            ],
+            "default": "2025"
+        },
+        "activityType": {
+            "title": "Main or secondary activity (hlavní / vedlejší činnost)",
+            "type": "string",
+            "description": "Secondary (vedlejší) only if you were at the same time employed, a student, a pensioner or on parental leave for the whole year.",
+            "editor": "select",
+            "enum": [
+                "main",
+                "secondary"
+            ],
+            "enumTitles": [
+                "Main (hlavní)",
+                "Secondary (vedlejší)"
+            ],
+            "default": "main"
+        },
+        "income": {
+            "title": "Income from your business (příjmy §7), Kč",
+            "type": "integer",
+            "description": "Total invoiced and received income for the year, in whole Kč.",
+            "minimum": 0,
+            "prefill": 900000
+        },
+        "expenseMode": {
+            "title": "Expenses (výdaje)",
+            "type": "string",
+            "description": "Flat-rate (paušální) expenses as a % of income, or your actual recorded expenses.",
+            "editor": "select",
+            "enum": [
+                "flatRate",
+                "actual"
+            ],
+            "enumTitles": [
+                "Flat-rate (paušální výdaje)",
+                "Actual (skutečné výdaje)"
+            ],
+            "default": "flatRate"
+        },
+        "flatRatePercent": {
+            "title": "Flat-rate expense %",
+            "type": "string",
+            "description": "80 % crafts and agriculture, 60 % most trades (živnost), 40 % liberal professions and other self-employment, 30 % renting business assets. Used only with flat-rate expenses.",
+            "editor": "select",
+            "enum": [
+                "80",
+                "60",
+                "40",
+                "30"
+            ],
+            "default": "60"
+        },
+        "actualExpenses": {
+            "title": "Actual expenses, Kč",
+            "type": "integer",
+            "description": "Used only with actual expenses.",
+            "minimum": 0
+        },
+        "childrenCount": {
+            "title": "Children you claim for the whole year",
+            "type": "integer",
+            "description": "Daňové zvýhodnění na vyživované dítě. Only full-year claims are supported.",
+            "minimum": 0,
+            "default": 0
+        },
+        "taxAdvancesPaid": {
+            "title": "Income tax advances paid (zálohy na daň), Kč",
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Income tax advances you paid yourself during the year. Most freelancers have none."
+        },
+        "socialAdvancesPaid": {
+            "title": "Social insurance advances paid (zálohy ČSSZ), Kč",
+            "type": "integer",
+            "description": "Sum of all monthly advances paid for this year.",
+            "minimum": 0,
+            "default": 0
+        },
+        "healthAdvancesPaid": {
+            "title": "Health insurance advances paid (zálohy VZP), Kč",
+            "type": "integer",
+            "description": "Sum of all monthly advances paid for this year.",
+            "minimum": 0,
+            "default": 0
+        },
+        "notes": {
+            "title": "Questions or notes",
+            "type": "string",
+            "description": "Anything you want explained, or details about your situation. Used only to answer questions and spot unsupported situations, never to change the numbers. Do not include your name, rodné číslo or other identifiers.",
+            "editor": "textarea"
+        },
+        "language": {
+            "title": "Explanation language",
+            "type": "string",
+            "editor": "select",
+            "enum": [
+                "en",
+                "cs"
+            ],
+            "enumTitles": [
+                "English",
+                "Čeština"
+            ],
+            "default": "en",
+            "description": "Language of the plain explanations. Official Czech row labels are always kept."
+        }
+    },
+    "required": [
+        "taxYear",
+        "activityType",
+        "income",
+        "expenseMode"
+    ]
+}

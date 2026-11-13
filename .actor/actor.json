@@ -1,0 +1,13 @@
+{
+    "actorSpecification": 1,
+    "name": "osvc-forms-helper",
+    "title": "OSVČ Forms Helper (CZ)",
+    "description": "Explains the annual Czech OSVČ filings (daňové přiznání, ČSSZ přehled, VZP přehled) in plain language and calculates every value from your numbers.",
+    "version": "0.1",
+    "buildTag": "latest",
+    "input": "./input_schema.json",
+    "dockerfile": "../Dockerfile",
+    "environmentVariables": {
+        "FEATHERLESS_API_KEY": "@featherlessApiKey"
+    }
+}
