@@ -17,7 +17,10 @@
   "dependencies": {
     "@langchain/core": "^1.4.0",
     "@langchain/langgraph": "^1.7.4",
+    "@langchain/mcp-adapters": "^2.0.3",
     "@langchain/openai": "^1.8.4",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "apify": "^3.7.2",
     "cheerio": "^1.2.0",
     "fast-xml-parser": "^5.12.1",
     "zod": "^4.6.7"
