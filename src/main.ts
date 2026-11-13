@@ -31,7 +31,9 @@ const answer = input.notes?.trim() ? await askLlm(input.notes, params, calculati
 
 await Actor.pushData(rows);
 await Actor.setValue('CALCULATION', { year: params.year, ...calculation, answer });
-await Actor.setValue('OUTPUT', buildHtml(params, calculation, rows, language, answer), { contentType: 'text/html' });
+await Actor.setValue('OUTPUT', buildHtml(params, calculation, rows, language, input.notes, answer), {
+    contentType: 'text/html',
+});
 
 log.info(`Done. DPFO balance ${calculation.tax.taxBalance} Kč, ČSSZ ${calculation.social.socialBalance} Kč, `
     + `VZP ${calculation.health.healthBalance} Kč. Open the OUTPUT record for the full report.`);

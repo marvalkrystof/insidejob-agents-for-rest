@@ -1,0 +1,18 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "OSVČ Forms Helper output",
+    "properties": {
+        "report": {
+            "type": "string",
+            "title": "Your report",
+            "description": "Summary of what to pay, the AI explanation, every form row and the deadlines.",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"
+        },
+        "rows": {
+            "type": "string",
+            "title": "All form rows (table)",
+            "description": "One line per form row, for copying or export.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"
+        }
+    }
+}

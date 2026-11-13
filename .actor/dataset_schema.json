@@ -1,0 +1,39 @@
+{
+    "actorSpecification": 1,
+    "fields": {},
+    "views": {
+        "overview": {
+            "title": "Form rows",
+            "transformation": {
+                "fields": ["form", "row", "label", "value", "explanation"]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "form": { "label": "Form", "format": "text" },
+                    "row": { "label": "Row", "format": "text" },
+                    "label": { "label": "Official label", "format": "text" },
+                    "value": { "label": "Value (Kč)", "format": "number" },
+                    "explanation": { "label": "What it means", "format": "text" }
+                }
+            }
+        },
+        "sources": {
+            "title": "Calculation and sources",
+            "transformation": {
+                "fields": ["form", "row", "value", "calculation", "sourceUrl", "sourceQuote"]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "form": { "label": "Form", "format": "text" },
+                    "row": { "label": "Row", "format": "text" },
+                    "value": { "label": "Value (Kč)", "format": "number" },
+                    "calculation": { "label": "How it was calculated", "format": "text" },
+                    "sourceUrl": { "label": "Source", "format": "link" },
+                    "sourceQuote": { "label": "Quote", "format": "text" }
+                }
+            }
+        }
+    }
+}
