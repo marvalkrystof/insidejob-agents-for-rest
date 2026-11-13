@@ -1,0 +1,41 @@
+{
+  "name": "Commuter from Kladno",
+  "language": "en",
+  "timeZone": "Europe/Prague",
+  "home": {
+    "address": "Pekařská 270 Kladno",
+    "municipality": "Kladno",
+    "municipalityParts": ["Kladno", "Dubí", "Hnidousy", "Kročehlavy", "Motyčín", "Rozdělov", "Švermov", "Vrapice"],
+    "lat": 50.147854926387865,
+    "lon": 14.10533219575882
+  },
+  "work": {
+    "label": "Prague 7 - Holešovice",
+    "lat": 50.103,
+    "lon": 14.45
+  },
+  "commute": {
+    "days": ["mon", "tue", "wed", "thu", "fri"],
+    "arriveAtParkAndRide": "08:00",
+    "usualDriveMinutes": 30,
+    "parkAndRideCandidates": [
+      { "name": "P+R Zličín", "lat": 50.0545683, "lon": 14.28977 },
+      { "name": "P+R Nové Butovice", "lat": 50.0521566, "lon": 14.3503035 }
+    ],
+    "transitLines": ["B", "C"],
+    "transitKeywords": ["Kladno", "Zličín", "Holešovice"],
+    "routeCorridorMeters": 300
+  },
+  "interests": ["film", "theatre", "stand-up comedy", "live music"],
+  "events": {
+    "gooutListingUrls": [
+      "https://goout.net/en/kladno/events/lezgawlkk/",
+      "https://goout.net/en/kladno/plays/lezgawlkkzg/",
+      "https://goout.net/en/kladno/concerts/lezgawlkkzf/",
+      "https://goout.net/en/kladno/exhibitions/lezgawlkkzh/",
+      "https://goout.net/en/kladno/for-children/lezgawlkkzq/"
+    ],
+    "eveningFrom": "17:30"
+  },
+  "horizonDays": 7
+}
