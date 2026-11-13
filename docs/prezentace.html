@@ -1,0 +1,420 @@
+<title>Feed Trainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: 16:9 jeviště 1280×720 škálované do okna, jeden slide naráz; na úzké obrazovce slidy pod sebou.
+   Vizuálně navazuje na panel aplikace: modrá = cílové téma, oranžová = staré téma, šedá = jiný obsah. */
+:root {
+  --paper: #f6f7f9;
+  --card: #ffffff;
+  --ink: #0e1116;
+  --ink-2: #4a5160;
+  --muted: #8a909c;
+  --line: #dfe3ea;
+  --accent: #2a78d6;
+  --accent-wash: rgba(42, 120, 214, 0.10);
+  --weak: #86b6ef;
+  --old: #eb6834;
+  --neutral: #c9cdd4;
+  --good: #0a8f0a;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1015; --card: #161a21; --ink: #eef1f5; --ink-2: #b9c0cc; --muted: #7d8492; --line: #2a303a;
+    --accent: #4a92ec; --accent-wash: rgba(74, 146, 236, 0.14); --weak: #2b5f9e; --old: #e06a3a; --neutral: #444a55; --good: #2fbf2f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1015; --card: #161a21; --ink: #eef1f5; --ink-2: #b9c0cc; --muted: #7d8492; --line: #2a303a;
+  --accent: #4a92ec; --accent-wash: rgba(74, 146, 236, 0.14); --weak: #2b5f9e; --old: #e06a3a; --neutral: #444a55; --good: #2fbf2f;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  margin: 0;
+  overflow: hidden;
+}
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+
+/* ── jeviště ── */
+.viewport { position: fixed; inset: 0; display: grid; place-items: center; }
+.stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; flex: none; }
+.slide {
+  position: absolute; inset: 0; background: var(--card); border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(14, 17, 22, 0.05), 0 12px 40px rgba(14, 17, 22, 0.07);
+  padding: 64px 72px 56px; display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; visibility: hidden; transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+}
+.slide.on { opacity: 1; visibility: visible; transition: opacity 0.35s ease; }
+.slide-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font: 500 13px/1 var(--font-mono); padding-top: 20px; }
+
+/* ── ovládání ── */
+.controls {
+  position: fixed; z-index: 5; display: flex; gap: 6px; align-items: center;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+.controls button {
+  font: 500 13px/1 var(--font-mono); color: var(--ink-2); background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 11px; cursor: pointer;
+}
+.controls button:hover { color: var(--ink); border-color: var(--muted); }
+.controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls .count { font: 500 13px/1 var(--font-mono); color: var(--muted); padding: 0 6px; min-width: 44px; text-align: center; }
+
+/* ── slide 1: úvod ── */
+.intro { display: grid; grid-template-columns: 1fr 360px; gap: 64px; height: 100%; }
+.intro-main { display: flex; flex-direction: column; min-width: 0; }
+.intro h1 { font-size: 104px; line-height: 0.95; font-weight: 800; margin-top: 26px; }
+.intro .tagline { font-size: 30px; line-height: 1.25; color: var(--ink-2); margin-top: 26px; max-width: 640px; font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
+.intro .tagline b { color: var(--ink); font-weight: 700; }
+.result { margin-top: auto; display: flex; gap: 40px; align-items: flex-end; }
+.result .big { font: 800 76px/1 var(--font-display); letter-spacing: -0.03em; }
+.result .big .from { color: var(--muted); font-weight: 700; }
+.result .big .arrow { color: var(--muted); font-weight: 500; padding: 0 10px; }
+.result .cap { font-size: 15px; line-height: 1.5; color: var(--ink-2); max-width: 300px; padding-bottom: 8px; }
+.result .cap b { color: var(--ink); }
+
+/* telefon s feedem: před a po */
+.phones { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-self: center; }
+.phone { border: 1px solid var(--line); border-radius: 26px; padding: 14px 10px 12px; background: var(--paper); display: flex; flex-direction: column; gap: 10px; }
+.phone .ph-label { font: 700 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.phone .ph-pct { font: 800 28px/1 var(--font-display); text-align: center; }
+.feed { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.feed i { display: block; aspect-ratio: 9 / 16; border-radius: 4px; background: var(--neutral); }
+.feed i.t { background: var(--accent); }
+.feed i.w { background: var(--weak); }
+.feed i.o { background: var(--old); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); justify-content: center; margin-top: 14px; grid-column: 1 / -1; flex-wrap: wrap; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { width: 9px; height: 14px; border-radius: 2px; display: inline-block; }
+
+/* ── slide 2: co to je ── */
+.two-col { display: grid; grid-template-columns: 1fr 1.08fr; gap: 56px; margin-top: 30px; min-height: 0; }
+.slide h2 { font-size: 46px; line-height: 1.05; font-weight: 700; margin-top: 14px; }
+.what { display: flex; flex-direction: column; gap: 22px; }
+.what .row { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+.what .n { font: 700 14px/1 var(--font-mono); color: var(--accent); background: var(--accent-wash); border-radius: 8px; height: 30px; display: grid; place-items: center; }
+.what h3 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.what p { font-size: 16px; line-height: 1.5; color: var(--ink-2); margin-top: 5px; }
+.quote { font: 500 15px/1.45 var(--font-mono); color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 8px; }
+
+.stack { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
+.stack .item { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stack .role { font: 700 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.stack .tech { font: 700 18px/1.2 var(--font-display); letter-spacing: -0.01em; }
+.stack .desc { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.stack .item.wide { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 14px; }
+.stack .item.wide .desc { flex: 1; }
+
+/* ── slide 3: fáze + přizpůsobení ── */
+.flow { display: flex; align-items: stretch; gap: 0; margin-top: 26px; }
+.ph { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--card); position: relative; }
+.ph .code { font: 700 18px/1 var(--font-mono); color: var(--accent); }
+.ph .name { font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; }
+.ph .d { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.ph .tag { margin-top: auto; padding-top: 6px; font: 600 11px/1.2 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ph.measure { background: var(--accent-wash); border-color: transparent; }
+.ph.core { border-color: var(--accent); }
+.ph.core .tag { color: var(--accent); }
+.lede { font-size: 18px; line-height: 1.5; color: var(--ink-2); margin-top: 12px; max-width: 900px; }
+.sep { width: 16px; flex: none; display: grid; place-items: center; color: var(--muted); font: 500 14px/1 var(--font-mono); }
+.loop { display: flex; justify-content: flex-end; margin-top: 10px; }
+.loop .back { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.ends-row { margin-top: 30px; display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: start; border-top: 1px solid var(--line); padding-top: 20px; }
+.ends-label { font: 700 13px/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); padding-top: 4px; }
+.ends-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.ends-grid > div { display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.4; color: var(--ink-2); min-width: 0; }
+.pill { align-self: flex-start; font: 600 11.5px/1 var(--font-mono); padding: 6px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+.pill.ok { border-color: var(--good); color: var(--good); }
+.pill.bad { border-color: var(--old); color: var(--old); }
+
+.adapt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 40px; }
+.adapt .card { border-top: 3px solid var(--ink); padding-top: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.adapt .card.learn { border-top-color: var(--accent); }
+.adapt .card h4 { margin: 0; font: 700 23px/1.2 var(--font-display); letter-spacing: -0.015em; }
+.adapt ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 11px; }
+.adapt li { font-size: 16px; line-height: 1.45; color: var(--ink-2); padding-left: 16px; position: relative; }
+.adapt li::before { content: ""; position: absolute; left: 0; top: 0.66em; width: 7px; height: 2px; background: var(--muted); }
+.adapt li b { color: var(--ink); font-weight: 600; }
+.demo-cue { font: 700 13px/1 var(--font-mono); color: var(--accent); letter-spacing: 0.06em; }
+
+/* ── úzká obrazovka: slidy pod sebou, bez škálování ── */
+@media (max-width: 760px), (max-height: 420px) {
+  body { overflow: auto; }
+  .viewport { position: static; display: block; padding-block: 16px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .stage { width: auto; height: auto; transform: none !important; display: flex; flex-direction: column; gap: 16px; }
+  .slide { position: relative; inset: auto; opacity: 1; visibility: visible; padding: 28px 22px 22px; border-radius: 14px; }
+  .intro, .two-col { grid-template-columns: 1fr; gap: 28px; }
+  .intro h1 { font-size: 56px; }
+  .intro .tagline { font-size: 20px; }
+  .result { flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 28px; }
+  .result .big { font-size: 48px; }
+  .phones { align-self: stretch; }
+  .slide h2 { font-size: 30px; }
+  .stack { grid-template-columns: 1fr; }
+  .stack .item.wide { flex-direction: column; }
+  .flow { flex-direction: column; gap: 6px; }
+  .sep { width: auto; height: 12px; transform: rotate(90deg); }
+  .loop { justify-content: flex-start; }
+  .ends-row { grid-template-columns: 1fr; }
+  .ends-grid { grid-template-columns: 1fr 1fr; }
+  .adapt { grid-template-columns: 1fr; gap: 22px; margin-top: 24px; }
+  .adapt .card h4 { font-size: 20px; }
+  .adapt li { font-size: 15px; }
+  .lede { font-size: 16px; }
+  .controls { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .slide, .slide.on { transition: none; } }
+</style>
+
+<div class="viewport" id="viewport">
+  <div class="stage" id="stage">
+
+    <!-- 1 · Úvod -->
+    <section class="slide on" id="intro" aria-label="Úvod">
+      <div class="intro">
+        <div class="intro-main">
+          <div class="eyebrow">Hackathon · AI agents for the rest of us</div>
+          <h1>Feed Trainer</h1>
+          <p class="tagline">Řekneš vlastními slovy, co chceš ve feedu vidět. <b>Agent ho přetrénuje za tebe</b> a ukáže, jestli to opravdu funguje.</p>
+          <div class="result">
+            <div class="big"><span class="from">7,5&nbsp;%</span><span class="arrow">→</span>65&nbsp;%</div>
+            <p class="cap"><b>Ostrý test na skutečném účtu:</b> podíl aut ve feedu za 1 cyklus, 51 minut tréninku a 0,10&nbsp;$. Průkazně (95% interval 50–78&nbsp;%).</p>
+          </div>
+        </div>
+        <div class="phones" aria-label="Ukázka feedu před tréninkem a po něm">
+          <div class="phone">
+            <div class="ph-label">Před</div>
+            <div class="ph-pct">7,5&nbsp;%</div>
+            <div class="feed" id="feedBefore"></div>
+          </div>
+          <div class="phone">
+            <div class="ph-label">Po</div>
+            <div class="ph-pct">65&nbsp;%</div>
+            <div class="feed" id="feedAfter"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background: var(--accent)"></i>k tématu</span>
+            <span><i style="background: var(--neutral)"></i>jiný obsah</span>
+            <span><i style="background: var(--old)"></i>staré téma</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · Co to je -->
+    <section class="slide" id="co-to-je" aria-label="Co to je a na čem to stojí">
+      <div class="eyebrow">Co to je</div>
+      <h2>Agent, který kouká na Reels za tebe</h2>
+      <div class="two-col">
+        <div class="what">
+          <div class="row">
+            <div class="n">1</div>
+            <div>
+              <h3>Zadáš cíl normální větou</h3>
+              <div class="quote">„Chci víc aut a F1, míň vaření. Ať to skončí dnes do 20:00, max 3 dolary.“</div>
+              <p>Model z toho sestaví konfiguraci cíle: téma, podtémata k hledání, staré téma, limity a čas konce.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="n">2</div>
+            <div>
+              <h3>Agent trénuje jako člověk</h3>
+              <p>V tvém prohlížeči reels k tématu dokouká, lajkne a uloží, ostatní do 2&nbsp;s přeskočí. Hledá, otevírá Explore, sleduje ověřené tvůrce. Lidské tempo a denní limity akcí.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="n">3</div>
+            <div>
+              <h3>Výsledek je změřený, ne odhadnutý</h3>
+              <p>Před tréninkem a po každém cyklu 40 položek feedu bez interakce. Úspěch se uzná, až když je zlepšení statisticky průkazné.</p>
+            </div>
+          </div>
+        </div>
+        <div class="stack" aria-label="Na čem je to postavené">
+          <div class="item">
+            <div class="role">Řízení</div>
+            <div class="tech">LangGraph.js</div>
+            <div class="desc">Stavový automat fází, trvalý stav mezi sessions.</div>
+          </div>
+          <div class="item">
+            <div class="role">Ruce</div>
+            <div class="tech">Patchright + tvůj Chrome</div>
+            <div class="desc">Běží lokálně: tvoje IP, tvoje přihlášení, heslo neopustí počítač.</div>
+          </div>
+          <div class="item">
+            <div class="role">Oči</div>
+            <div class="tech">Qwen3-VL-30B</div>
+            <div class="desc">Přes Featherless hodnotí popisek, hashtagy i screenshot reelu.</div>
+          </div>
+          <div class="item">
+            <div class="role">Zadání</div>
+            <div class="tech">DeepSeek-V4.1-Flash</div>
+            <div class="desc">Přes Featherless převádí větu na konfiguraci cíle.</div>
+          </div>
+          <div class="item">
+            <div class="role">Discovery</div>
+            <div class="tech">Apify</div>
+            <div class="desc">Scraper hashtagů najde čerstvé reels k tématu jako startovní body.</div>
+          </div>
+          <div class="item">
+            <div class="role">Panel</div>
+            <div class="tech">Node + SSE</div>
+            <div class="desc">Spuštění, zastavení a živé grafy z logů agenta.</div>
+          </div>
+          <div class="item wide">
+            <div class="role">Základ</div>
+            <div class="desc">Node.js 26 a TypeScript. Bez cloudu, běží na notebooku uživatele.</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-foot"><span>Feed Trainer</span><span>2 / 4</span></div>
+    </section>
+
+    <!-- 3 · Fáze -->
+    <section class="slide" id="faze" aria-label="Fáze agenta">
+      <div class="eyebrow">Jak agent pracuje</div>
+      <h2>Fáze jednoho cyklu</h2>
+      <p class="lede">Agent je stavový automat. Každý cyklus začíná měřením a končí plánem dalšího. Jeden cyklus trvá zhruba 25–35 minut tréninku.</p>
+      <div class="flow" aria-label="Pořadí fází v cyklu">
+        <div class="ph measure"><span class="code">M</span><span class="name">Měření</span><span class="d">Po 10 min klidu projde 20 dlaždic Explore a 20 reels. Nic nelajkuje, jen hodnotí.</span><span class="tag">oficiální číslo</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph"><span class="code">✓</span><span class="name">Kontrola</span><span class="d">Porovná s výchozím měřením. Zlepšení se počítá, až když je průkazné (95% interval).</span><span class="tag">konec, nebo dál</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph"><span class="code">F1</span><span class="name">Úklid</span><span class="d">Přestane sledovat tvůrce, které kdysi sledoval kvůli starému tématu.</span><span class="tag">jen při změně cíle</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph core"><span class="code">F2</span><span class="name">Hledání</span><span class="d">3–5 dotazů na podtémata, startovní reels z Apify, sledování ověřených tvůrců.</span><span class="tag">rozjezd tématu</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph core"><span class="code">F3</span><span class="name">Reels</span><span class="d">15–20 min scrollování. K tématu: dokoukat, like, uložit. Ostatní: přeskočit do 2 s.</span><span class="tag">hlavní trénink</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph core"><span class="code">F4</span><span class="name">Explore</span><span class="d">Otevře 3–5 dlaždic, které nejvíc odpovídají tématu.</span><span class="tag">posílení</span></div>
+        <div class="sep" aria-hidden="true">→</div>
+        <div class="ph"><span class="code">F5</span><span class="name">Plán</span><span class="d">Vyhodnotí cyklus. Při stagnaci přidá nová podtémata, při limitu jde na finální měření.</span><span class="tag">strategie</span></div>
+      </div>
+      <div class="loop">
+        <span class="back">↺ pauza 10–30 min, pak znovu M</span>
+      </div>
+      <div class="ends-row">
+        <div class="ends-label">Kdy agent skončí</div>
+        <div class="ends-grid">
+          <div><span class="pill ok">SUCCESS</span><span>cíl splněn ve 2 měřeních po sobě</span></div>
+          <div><span class="pill">PLATEAU</span><span>posunul se, ale dál neroste</span></div>
+          <div><span class="pill">NO_EFFECT</span><span>6 cyklů bez průkazného efektu</span></div>
+          <div><span class="pill">LIMIT_REACHED</span><span>došly cykly, minuty, peníze nebo čas</span></div>
+          <div><span class="pill bad">ABORTED</span><span>druhé varování od Instagramu</span></div>
+        </div>
+      </div>
+      <div class="slide-foot"><span>Feed Trainer</span><span>3 / 4</span></div>
+    </section>
+
+    <!-- 4 · Přizpůsobení a samooprava -->
+    <section class="slide" id="samooprava" aria-label="Jak se agent přizpůsobuje a opravuje">
+      <div class="eyebrow">Samoopravné schopnosti</div>
+      <h2>Přizpůsobuje se podle videí a sám se opraví</h2>
+      <p class="lede">Agent nejede podle pevného scénáře. To, co ve feedu uvidí, mění jeho další kroky.</p>
+      <div class="adapt">
+        <div class="card learn">
+          <h4>Učí se z toho, co viděl</h4>
+          <ul>
+            <li>Každé video ohodnotí z popisku, hashtagů a screenshotu.</li>
+            <li>Z hashtagů reels, které silně odpovídaly tématu, si při stagnaci <b>přidá nová podtémata</b> pro hledání i Apify.</li>
+            <li>Tvůrce sleduje až po <b>2 silných reelech</b>, takže feed staví na ověřených zdrojích.</li>
+            <li>Další reel hodnotí <b>dopředu</b>, ještě než na něj doscrolluje.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Měří sám sebe</h4>
+          <ul>
+            <li>Feed 2 cykly neroste: <b>změní strategii</b> a hledá jinde.</li>
+            <li>Po 6 cyklech bez průkazného efektu <b>skončí</b>, místo aby dál riskoval účet.</li>
+            <li>Stav přežije restart: cooldown, rozpočty i měření, další spuštění naváže.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Přežije změny webu</h4>
+          <ul>
+            <li>Funkci, kterou web nemá (např. „Nemám zájem“), <b>přestane zkoušet</b>.</li>
+            <li>Web po startovním reelu nepokračuje: <b>sníží jejich počet</b>.</li>
+            <li>Model nestihne odpovědět: <b>záložní pravidla</b> podle klíčových slov.</li>
+            <li>Varování od Instagramu: <b>STOP a pauza</b> 24–48 h. Změna UI: stop a upozornění.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-foot"><span class="demo-cue">Teď živé demo panelu →</span><span>4 / 4</span></div>
+    </section>
+
+  </div>
+</div>
+
+<nav class="controls" aria-label="Ovládání prezentace">
+  <button type="button" id="prev" aria-label="Předchozí slide">←</button>
+  <span class="count" id="count" aria-live="polite">1 / 4</span>
+  <button type="button" id="next" aria-label="Další slide">→</button>
+  <button type="button" id="full" aria-label="Celá obrazovka">⤢</button>
+</nav>
+
+<script>
+(() => {
+  // Ukázkové feedy: rozložení podle skutečných měření (M0 3/40 k tématu, M_final 26/40 k tématu, 3/40 staré téma).
+  const fill = (id, pattern) => {
+    const el = document.getElementById(id);
+    for (const c of pattern) { const i = document.createElement('i'); if (c !== '.') i.className = c; el.append(i); }
+  };
+  fill('feedBefore', '....' + '.t..' + '....' + '....' + '..t.' + '....' + 't...' + '....' + '....' + '.w..');
+  fill('feedAfter',  'tt.t' + 'tttw' + '.tto' + 'tt.t' + 'ttt.' + 'o.tt' + 'tt.t' + '.ttt' + 'ttot' + 't.t.');
+
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = document.getElementById('stage');
+  const count = document.getElementById('count');
+  let cur = 0;
+
+  function show(i, fromHash) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => { s.classList.toggle('on', k === cur); s.setAttribute('aria-hidden', String(k !== cur && !narrow())); });
+    count.textContent = `${cur + 1} / ${slides.length}`;
+    if (!fromHash) history.replaceState(null, '', cur === 0 ? location.pathname + location.search : `#${slides[cur].id}`);
+  }
+  const narrow = () => matchMedia('(max-width: 760px), (max-height: 420px)').matches;
+
+  function fit() {
+    if (narrow()) { stage.style.transform = ''; return; }
+    const s = Math.min((innerWidth - 32) / 1280, (innerHeight - 72) / 720);
+    stage.style.transform = `scale(${Math.max(0.2, s)})`;
+  }
+
+  document.getElementById('prev').addEventListener('click', () => show(cur - 1));
+  document.getElementById('next').addEventListener('click', () => show(cur + 1));
+  document.getElementById('full').addEventListener('click', () => {
+    const el = document.documentElement;
+    try {
+      const p = document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.();
+      p?.catch?.(() => {});
+    } catch { /* celá obrazovka tu není k dispozici */ }
+  });
+  addEventListener('keydown', (e) => {
+    if (e.target.closest?.('input, textarea')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+  const fromHash = () => { const k = slides.findIndex((s) => `#${s.id}` === location.hash); show(k === -1 ? 0 : k, true); };
+  addEventListener('hashchange', fromHash);
+  addEventListener('resize', () => { fit(); show(cur, true); });
+  fit();
+  fromHash();
+})();
+</script>

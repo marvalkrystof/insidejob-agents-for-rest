@@ -1,0 +1,29 @@
+{
+  "name": "feed-trainer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent, který trénuje tvůj Instagram Reels feed směrem, který si zvolíš.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "app": "node --env-file-if-exists=.env app/server.ts",
+    "inspect": "node --env-file-if-exists=.env src/main.ts --inspect",
+    "test:fixture": "node --env-file-if-exists=.env test/run-fixture.ts",
+    "typecheck": "tsc",
+    "seed": "node --env-file-if-exists=.env src/seed-cli.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "1.3.2",
+    "@langchain/langgraph": "1.5.3",
+    "@langchain/openai": "1.7.1",
+    "patchright": "1.64.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "6.0.3"
+  }
+}

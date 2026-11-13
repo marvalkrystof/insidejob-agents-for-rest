@@ -1,0 +1,8 @@
+node_modules/
+.env
+.profile*/
+logs/
+test/fixture/*.webm
+.DS_Store
+data/
+data-test/

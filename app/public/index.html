@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feed Trainer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a78d6'/%3E%3Cpath d='M8 22l6-7 4 4 6-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Feed Trainer</h1>
+        <p class="sub">Trénink Instagram feedu, živě</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <label class="goal-pick">
+        <span>Cíl</span>
+        <select id="goalSelect" aria-label="Zobrazený cíl"></select>
+      </label>
+      <span id="conn" class="conn" title="Spojení s aplikací">●</span>
+      <button id="themeBtn" class="ghost icon" type="button" aria-label="Přepnout světlý/tmavý režim" title="Světlý/tmavý režim">◐</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel control" aria-label="Ovládání">
+      <section class="card">
+        <div class="status-row">
+          <span id="statusPill" class="pill">Neběží</span>
+          <span id="statusSince" class="muted small"></span>
+        </div>
+        <p id="statusText" class="small muted"></p>
+        <div class="btn-row">
+          <button id="startBtn" class="primary" type="button">Spustit</button>
+          <button id="stopBtn" class="danger" type="button" disabled>Zastavit</button>
+        </div>
+        <p id="formError" class="error small" role="alert" hidden></p>
+      </section>
+
+      <section class="card">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tabExisting" aria-selected="true" type="button">Uložený cíl</button>
+          <button role="tab" id="tabNew" aria-selected="false" type="button">Nový cíl</button>
+          <button role="tab" id="tabFixture" aria-selected="false" type="button">Test</button>
+        </div>
+
+        <div id="paneExisting" role="tabpanel">
+          <label class="field">
+            <span>Cíl ze složky goals/</span>
+            <select id="goalFileSelect"></select>
+          </label>
+          <p id="goalFileInfo" class="small muted"></p>
+        </div>
+
+        <form id="paneNew" role="tabpanel" hidden autocomplete="off">
+          <div class="nl">
+            <label class="field">
+              <span>Popiš, co chceš, vlastními slovy</span>
+              <textarea id="nlText" rows="4" maxlength="2000" placeholder="např. chci víc aut a F1, míň vaření. Testovací účet, ať jede naplno a skončí dnes do 20:00, max 3 dolary."></textarea>
+            </label>
+            <div class="nl-row">
+              <button type="button" id="nlBtn" class="primary">Sestavit cíl</button>
+              <span id="nlStatus" class="small muted" aria-live="polite"></span>
+            </div>
+            <div id="nlResult" class="nl-result" hidden></div>
+          </div>
+          <p class="divider small muted"><span>zkontroluj nebo uprav</span></p>
+          <label class="field">
+            <span>Co chceš ve feedu vidět víc? *</span>
+            <input name="target_topic" required placeholder="např. auta">
+          </label>
+          <label class="field">
+            <span>Popis tématu</span>
+            <input name="target_description" placeholder="sportovní auta, recenze, motorsport, drift">
+          </label>
+          <label class="field">
+            <span>Podtémata k hledání <em>(čárkou)</em></span>
+            <input name="subtopics" placeholder="supercars, drift, recenze aut">
+          </label>
+          <label class="field">
+            <span>Co chceš vidět míň? <em>(čárkou)</em></span>
+            <input name="old_topics" placeholder="vaření, pečení">
+          </label>
+          <fieldset class="field seg">
+            <legend>Účet</legend>
+            <label><input type="radio" name="account_type" value="test" checked> Testovací</label>
+            <label><input type="radio" name="account_type" value="real"> Skutečný</label>
+          </fieldset>
+          <fieldset class="field seg" id="modeSet">
+            <legend>Tempo</legend>
+            <label><input type="radio" name="mode" value="fast" checked> Rychlé</label>
+            <label><input type="radio" name="mode" value="safe"> Bezpečné</label>
+          </fieldset>
+          <p id="modeNote" class="small muted"></p>
+          <details class="limits">
+            <summary>Limity</summary>
+            <div class="grid2">
+              <label class="field"><span>Max. cyklů</span><input name="max_cycles" type="number" min="1" inputmode="numeric"></label>
+              <label class="field"><span>Max. minut tréninku</span><input name="max_active_minutes" type="number" min="1" inputmode="numeric"></label>
+              <label class="field"><span>Max. náklady (USD)</span><input name="max_cost_usd" type="number" min="0" step="0.5" inputmode="decimal"></label>
+              <label class="field"><span>Skončit nejpozději</span><input name="hard_stop_at" type="datetime-local"></label>
+            </div>
+            <label class="check"><input type="checkbox" name="verify_persistence"> Ověřit, že změna vydrží (12 h pauza)</label>
+            <label class="check"><input type="checkbox" name="seeds_enabled" checked> Startovní reels přes Apify</label>
+          </details>
+          <details class="limits" id="draftJsonBox" hidden>
+            <summary>Job definition (JSON)</summary>
+            <pre id="draftJson" class="out"></pre>
+          </details>
+          <button type="button" id="saveGoalBtn" class="ghost small save-btn">Jen uložit cíl</button>
+        </form>
+
+        <div id="paneFixture" role="tabpanel" hidden>
+          <p class="small">Projde celý workflow na lokální napodobenině Instagramu: měření, cykly, finální měření a zpráva. Žádný účet, žádné API, pauzy jsou zrychlené. Trvá zhruba 2–5 minut.</p>
+          <label class="check"><input type="checkbox" id="fixtureShow" checked> Ukázat okno prohlížeče</label>
+        </div>
+      </section>
+
+      <section class="card" id="runModeCard">
+        <fieldset class="field seg stack">
+          <legend>Co agent smí dělat</legend>
+          <label><input type="radio" name="runmode" value="dry" checked> <b>Jen sledovat</b><span class="small muted">kouká a přeskakuje, nic nelajkuje ani nehledá</span></label>
+          <label><input type="radio" name="runmode" value="live"> <b>Naplno</b><span class="small muted">lajky, ukládání, sledování, vyhledávání</span></label>
+        </fieldset>
+        <p id="liveWarn" class="warn small" hidden>Naplno na skutečném účtu: Instagram může omezit akce. Agent se při varování sám zastaví.</p>
+      </section>
+
+      <section class="card keys small">
+        <div><span id="keyFeather" class="dot"></span> Featherless (klasifikace)</div>
+        <div><span id="keyApify" class="dot"></span> Apify (startovní reels)</div>
+        <p class="muted">Klíče se čtou z <code>.env</code>.</p>
+      </section>
+    </aside>
+
+    <main class="dash" aria-label="Přehled">
+      <div id="banner" class="banner" hidden></div>
+
+      <section class="tiles" aria-label="Souhrn">
+        <div class="tile hero">
+          <div class="label" id="heroLabel">Podíl tématu ve feedu</div>
+          <div class="value" id="heroValue">–</div>
+          <div class="delta" id="heroDelta"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Živě ve feedu <span class="muted">(posl. 20)</span></div>
+          <div class="value" id="tLive">–</div>
+          <div class="delta" id="tLiveSub"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Staré téma</div>
+          <div class="value" id="tOld">–</div>
+          <div class="delta" id="tOldSub"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Cykly</div>
+          <div class="value" id="tCycles">–</div>
+          <div class="meter"><span id="mCycles"></span></div>
+          <div class="delta" id="tCyclesSub"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Aktivní trénink</div>
+          <div class="value" id="tMinutes">–</div>
+          <div class="meter"><span id="mMinutes"></span></div>
+          <div class="delta" id="tMinutesSub"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Náklady</div>
+          <div class="value" id="tCost">–</div>
+          <div class="meter"><span id="mCost"></span></div>
+          <div class="delta" id="tCostSub"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Kde agent právě je</h2>
+          <span id="nowWhen" class="muted small"></span>
+        </div>
+        <ol class="stepper" id="stepper"></ol>
+        <p id="nowText" class="now"></p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Oficiální měření</h2>
+            <p class="small muted">Podíl obsahu k tématu při každém měření M (40 položek, 95% interval). Zlepšení je průkazné, když spodní hranice přeskočí horní hranici výchozího měření.</p>
+          </div>
+          <button class="ghost small" type="button" data-table="measTable">Tabulka</button>
+        </div>
+        <div class="legend" id="measLegend"></div>
+        <div class="chart" id="measChart"></div>
+        <div class="table-wrap" id="measTable" hidden></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Živě: reels z feedu</h2>
+            <p class="small muted">Klouzavý podíl k tématu (posledních 20 reels z feedu) a každý zhlédnutý reel podle verdiktu.</p>
+          </div>
+        </div>
+        <div class="chart" id="liveChart"></div>
+        <div class="legend" id="stripLegend"></div>
+        <div class="strip" id="strip" aria-label="Zhlédnuté reels"></div>
+      </section>
+
+      <div class="two">
+        <section class="card">
+          <div class="card-head"><h2>Reels podle zdroje</h2></div>
+          <div class="legend" id="srcLegend"></div>
+          <div id="srcBars" class="hbars"></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Akce dnes vs. rozpočet</h2><span id="budgetMode" class="muted small"></span></div>
+          <div id="budgets" class="meters"></div>
+        </section>
+      </div>
+
+      <div class="two">
+        <section class="card">
+          <div class="card-head"><h2>Klasifikace (Judge)</h2></div>
+          <div id="judge"></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Upozornění</h2></div>
+          <ul id="alerts" class="alerts"></ul>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h2>Poslední reels</h2><span id="reelCount" class="muted small"></span></div>
+        <div class="table-wrap tall"><table class="reels" id="reelTable">
+          <thead><tr><th>Čas</th><th>Fáze</th><th>Zdroj</th><th>Autor</th><th>Verdikt</th><th class="num">Téma</th><th class="num">Staré</th><th class="num">Sledováno</th><th>Akce</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+
+      <section class="card">
+        <details>
+          <summary><h2 class="inline">Výstup procesu</h2></summary>
+          <pre id="out" class="out"></pre>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
