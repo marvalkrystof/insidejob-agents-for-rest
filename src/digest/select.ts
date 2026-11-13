@@ -175,6 +175,11 @@ const describeWhen = (item: Item, now: Date): string | undefined => {
   if (!item.timeRange) {
     return undefined;
   }
+  // PID feed start dates can predate a change by years (Florenc C: 2022 in the feed, 31 Jan 2025 in its text), and
+  // the dates in the text often belong to later stages, so an ongoing open-ended change gets no "since" date.
+  if (item.source === "pid" && !item.timeRange.to && new Date(item.timeRange.from) <= now) {
+    return undefined;
+  }
   const range = formatTimeRange(item.timeRange.from, item.timeRange.to, now);
   return item.type === "notice" ? `notice posted ${range}` : range;
 };

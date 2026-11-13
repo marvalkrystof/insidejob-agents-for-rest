@@ -26,7 +26,7 @@ The single list of what Domovník does or could do, with the priority and status
 | Feature | Priority | Status | Code |
 |---|---|---|---|
 | Closures and roadworks within 300 m of the drive: opravujeme.to (Prague) and KSÚS (Central Bohemian roads) | MVP | built | `src/collectors/opravujeme.ts`, `src/collectors/ksus.ts`, `src/pipeline/filter.ts` |
-| Public transport disruptions on the commuter's lines (metro B and C) and keywords, from the PID RSS | MVP | partial: the feed's start date can disagree with the text (Florenc C: "since 6 Jun 2022", text says 31 Jan 2025) | `src/collectors/pid.ts`, `src/pipeline/filter.ts` |
+| Public transport disruptions on the commuter's lines (metro B and C) and keywords, from the PID RSS; an ongoing change is shown without a start date, because the feed's start dates are unreliable | MVP | built | `src/collectors/pid.ts`, `src/pipeline/filter.ts`, `src/digest/select.ts` |
 | Recommended departure time from the drive time with traffic (TomTom Routing, `arriveAt`), compared with the usual departure | MVP | built | `src/route/tomtom.ts`, `src/route/commute.ts`, `src/digest/select.ts` |
 | P+R choice: the fastest P+R that usually still has at least 15 free spaces at arrival, with the free spaces now when the count was measured within 60 minutes of the digest time (Golemio) | MVP | built | `src/route/parking.ts`, `src/digest/select.ts`, `src/web/page.ts` |
 | Parking agent: answers "Where do I park near Holešovice tomorrow at 8 and what will it cost?" through the Parking MCP tools | MVP | not built | `src/agent/parking-agent.ts` |
