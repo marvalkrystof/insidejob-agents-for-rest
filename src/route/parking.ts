@@ -14,9 +14,6 @@ const RATE_LIMIT_WINDOW_MS = 8 * MS_PER_SECOND;
 // average-occupancy is keyed by JavaScript weekday index; "0" has the flat weekend profile of a Sunday.
 const WEEKDAY_INDEX: Readonly<Record<string, string>> = { sun: "0", mon: "1", tue: "2", wed: "3", thu: "4", fri: "5", sat: "6" };
 
-const parkingListSchema = z.object({
-  features: z.array(z.object({ properties: z.object({ id: z.string(), name: z.string() }) })),
-});
 const measurementsSchema = z.array(
   z.object({ total_spot_number: z.number(), free_spot_number: z.number(), last_updated: z.string() }),
 );
@@ -90,40 +87,4 @@ export const fetchSingleParkingStatus = async (apiKey: string, parkingId: string
     updatedAt: toPragueIso(parseIsoDate(latest.last_updated)),
     usualOccupiedAtArrival: averages[weekdayIndex]?.[hour],
   };
-};
-
-/**
- * One profile P+R can map to several Golemio parkings ("P+R Zličín" = "Zličín 1" + "Zličín 2"),
- * so statuses are summed per profile name.
- */
-export const fetchParkAndRideStatuses = async (
-  apiKey: string,
-  parkAndRideNames: readonly string[],
-  arriveAt: Date,
-): Promise<Map<string, ParkingStatus>> => {
-  const { features } = parkingListSchema.parse(
-    await fetchGolemio(apiKey, "/v3/parking?parkingPolicy[]=park_and_ride&limit=500", GOLEMIO_CACHE_TTL_MS.parkings),
-  );
-  const statuses = new Map<string, ParkingStatus>();
-  for (const name of parkAndRideNames) {
-    const parkingIds = features.filter(({ properties }) => properties.name.startsWith(name)).map(({ properties }) => properties.id);
-    const parts: SingleParkingStatus[] = [];
-    for (const parkingId of parkingIds) {
-      parts.push(await fetchSingleParkingStatus(apiKey, parkingId, arriveAt));
-    }
-    if (parts.length === 0) {
-      continue;
-    }
-    const totalSpots = parts.reduce((sum, part) => sum + part.totalSpots, 0);
-    const hasUsualOccupancy = parts.every((part) => part.usualOccupiedAtArrival !== undefined);
-    statuses.set(name, {
-      totalSpots,
-      freeNow: parts.reduce((sum, part) => sum + part.freeNow, 0),
-      updatedAt: parts.map((part) => part.updatedAt).sort()[0] ?? "",
-      usualFreeAtArrival: hasUsualOccupancy
-        ? toUsualFreeSpots(totalSpots, parts.reduce((sum, part) => sum + (part.usualOccupiedAtArrival ?? 0), 0))
-        : undefined,
-    });
-  }
-  return statuses;
 };

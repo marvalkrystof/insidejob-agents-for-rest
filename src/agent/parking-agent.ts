@@ -6,10 +6,10 @@ import { MCPAdapter } from "@langchain/mcp-adapters";
 import { loadEnvFileIfPresent } from "../libs/env.utils";
 import { addDays, atPragueClock, formatDateTimeLabel, isCzechPublicHoliday, toPragueIso } from "../libs/time.utils";
 import { createFeatherlessChatModel } from "../llm/featherless";
+import { parkingServerProcess } from "../mcp/parking-client";
 import { loadProfile, type Profile } from "../profile";
 
 const DEMO_QUESTION = "Where do I park near Holešovice tomorrow at 8 and what will it cost?";
-const PARKING_SERVER_ENTRY = "src/mcp/parking-server.ts";
 // MemorySaver keeps one conversation per thread for the lifetime of the process.
 const THREAD_ID = "parking-agent-cli";
 const ASSUMED_STAY_HOURS = 9;
@@ -78,7 +78,7 @@ const main = async (): Promise<void> => {
   const profile = await loadProfile();
   const adapter = new MCPAdapter({
     servers: {
-      parking: { transport: "stdio", command: process.execPath, args: ["--import", "tsx", PARKING_SERVER_ENTRY], cwd: process.cwd() },
+      parking: { transport: "stdio", ...parkingServerProcess() },
     },
     prefixToolNameWithServerName: false,
   });

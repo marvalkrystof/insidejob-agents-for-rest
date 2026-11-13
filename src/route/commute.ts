@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { readOptionalEnv } from "../libs/env.utils";
+import { describeError } from "../libs/error.utils";
 import { addDays, atPragueClock, pragueWeekday, toPragueIso } from "../libs/time.utils";
+import { fetchParkAndRideStatusesViaMcp } from "../mcp/parking-client";
 import type { Profile } from "../profile";
-import { fetchParkAndRideStatuses, parkingStatusSchema, type ParkingStatus } from "./parking";
+import { parkingStatusSchema, type ParkingStatus } from "./parking";
 import { planRouteArrivingAt, plannedRouteSchema } from "./tomtom";
 
 const DAYS_TO_SEARCH = 8;
@@ -29,15 +31,19 @@ export const nextCommuteArrival = (profile: Profile, now: Date): Date => {
   throw new Error("Profile has no commute day in the next week");
 };
 
-/** P+R occupancy is optional: without a Golemio key the plan still works on travel time alone. */
+/** P+R occupancy is optional: without a Golemio key or the Parking MCP server the plan still works on travel time alone. */
 const readParkingStatuses = async (profile: Profile, arriveAt: Date): Promise<Map<string, ParkingStatus>> => {
-  const apiKey = readOptionalEnv("GOLEMIO_API_KEY");
-  if (!apiKey) {
+  // The server reads the key itself; checking it here avoids starting a server that cannot answer.
+  if (!readOptionalEnv("GOLEMIO_API_KEY")) {
     console.warn("GOLEMIO_API_KEY is missing: P+R occupancy skipped");
     return new Map();
   }
-  const names = profile.commute.parkAndRideCandidates.map((candidate) => candidate.name);
-  return fetchParkAndRideStatuses(apiKey, names, arriveAt);
+  try {
+    return await fetchParkAndRideStatusesViaMcp(profile.commute.parkAndRideCandidates, arriveAt);
+  } catch (error) {
+    console.warn(`Parking MCP failed (${describeError(error)}): P+R occupancy skipped`);
+    return new Map();
+  }
 };
 
 /** Routes to every P+R candidate; the digest picks one using occupancy and travel time. */
