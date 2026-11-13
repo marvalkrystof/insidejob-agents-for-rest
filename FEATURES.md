@@ -29,7 +29,8 @@ The single list of what Domovník does or could do, with the priority and status
 | Public transport disruptions on the commuter's lines (metro B and C) and keywords, from the PID RSS; an ongoing change is shown without a start date, because the feed's start dates are unreliable | MVP | built | `src/collectors/pid.ts`, `src/pipeline/filter.ts`, `src/digest/select.ts` |
 | Recommended departure time from the drive time with traffic (TomTom Routing, `arriveAt`), compared with the usual departure | MVP | built | `src/route/tomtom.ts`, `src/route/commute.ts`, `src/digest/select.ts` |
 | P+R choice: the fastest P+R that usually still has at least 15 free spaces at arrival, with the free spaces now when the count was measured within 60 minutes of the digest time (Golemio) | MVP | built | `src/route/parking.ts`, `src/digest/select.ts`, `src/web/page.ts` |
-| Parking agent: answers "Where do I park near Holešovice tomorrow at 8 and what will it cost?" through the Parking MCP tools | MVP | not built | `src/agent/parking-agent.ts` |
+| Parking agent: answers "Where do I park near Holešovice tomorrow at 8 and what will it cost?" through the Parking MCP tools, assuming a 9-hour stay when no end time is given | MVP | built | `src/agent/parking-agent.ts`, `yarn agent` |
+| Parking agent: free-text destinations ("near the National Theatre") through geocoding, beyond the profile's places | idea | not built | |
 | Alternative route or switching to public transport | V2 | not built | |
 | Events at the destination (concert, match) taken into account in traffic and parking estimates | V2 | not built | |
 | Lift and escalator outages in public transport for people with reduced mobility | V3 | not built | |
@@ -203,9 +204,10 @@ digest:
 | Feature list check | MVP | built | `yarn check:features`, `src/check-features.ts` |
 | Apify Actor `domovnik-collect` with module switches, wrapping the collection pipeline | MVP | not built | `.actor/actor.json`, `src/actor/main.ts` |
 | Daily scheduled run (e.g. Apify Schedules); hosting is undecided ([LATER.md](LATER.md)) | idea | not built | |
-| Parking MCP tool `find_parking_near`: destination, arrival time, max. walking distance, type (street, garage, P+R), constraints (disabled parking, EV charging) → spots with distance, price and availability estimate | MVP | not built | `src/mcp/parking-server.ts` |
-| Parking MCP tool `get_pr_occupancy`: P+R car park ID → current and usual occupancy | MVP | not built | |
-| Parking MCP tool `get_parking_tariff`: place, date and time → tariff, zone, max. duration, exceptions | MVP | not built | |
+| Parking MCP tool `find_parking_near`: destination, arrival time, max. walking distance, type (street, garage, P+R), constraints (disabled parking, EV charging) → spots with distance, price and availability estimate | MVP | partial: the destination is coordinates (no geocoding), distances are straight lines, and only P+R car parks have occupancy data (street and garage availability is `estimate`) | `src/mcp/parking-server.ts`, `src/mcp/parking-places.ts`, `yarn mcp` |
+| Parking MCP tool `get_pr_occupancy`: P+R car park ID → current and usual occupancy | MVP | built | `src/mcp/parking-server.ts`, `src/route/parking.ts` |
+| Parking MCP tool `get_parking_tariff`: place, date and time → tariff, zone, max. duration, exceptions (public holidays, hours the tariff does not cover) | MVP | built | `src/mcp/parking-server.ts`, `src/mcp/parking-tariff.ts` |
+| Golemio responses cached per endpoint TTL (its terms forbid repeating identical calls), at most 20 requests per 8 s | MVP | built | `src/route/parking.ts`, `src/libs/cache.utils.ts` |
 | Parking MCP tool `estimate_parking_difficulty`: destination, time → score from 0 to 100 from time of day, nearby events, occupancy and history | idea | not built | |
 | Parking MCP tool `get_nearby_events`: destination, time → events that make parking harder (concert, match) | idea | not built | |
 | Parking MCP tool `suggest_park_and_ride`: destination, arrival time → P+R and public transport combination with total time and price | idea | not built | |

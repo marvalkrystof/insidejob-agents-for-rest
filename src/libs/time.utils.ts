@@ -83,6 +83,37 @@ export const addDays = (date: Date, days: number): Date => new Date(date.getTime
 
 export const pragueToday = (now: Date = new Date()): string => toPragueIso(now).slice(0, DATE_ONLY_LENGTH);
 
+// Czech public holidays with a fixed date (Act No. 245/2000 Coll.), as "MM-DD".
+const FIXED_CZECH_PUBLIC_HOLIDAYS = new Set(["01-01", "05-01", "05-08", "07-05", "07-06", "09-28", "10-28", "11-17", "12-24", "12-25", "12-26"]);
+
+/** Easter Sunday at UTC midnight, by the anonymous Gregorian algorithm (Meeus/Jones/Butcher); the letters follow the algorithm. */
+const getEasterSunday = (year: number): Date => {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const monthAndDay = h + l - 7 * m + 114;
+  return new Date(Date.UTC(year, Math.floor(monthAndDay / 31) - 1, (monthAndDay % 31) + 1));
+};
+
+/** The fixed-date holidays plus Good Friday and Easter Monday, for the Prague calendar day of `date`. */
+export const isCzechPublicHoliday = (date: Date): boolean => {
+  const day = pragueToday(date);
+  if (FIXED_CZECH_PUBLIC_HOLIDAYS.has(day.slice(5))) {
+    return true;
+  }
+  const easterSunday = getEasterSunday(Number(day.slice(0, 4)));
+  return [-2, 1].some((offsetDays) => addDays(easterSunday, offsetDays).toISOString().slice(0, DATE_ONLY_LENGTH) === day);
+};
+
 /** Lower-case three-letter weekday in Prague, e.g. "mon". */
 export const pragueWeekday = (date: Date): string => weekdayFormatter.format(date).toLowerCase();
 

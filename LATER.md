@@ -23,7 +23,7 @@ The prototype knowingly ignores the terms and robots.txt rules below. Resolve th
 - [ ] **Personal data in sources:** notice board (names, dates of birth, addresses in decisions), opravujeme.to (names and phone numbers of responsible persons). Do not display, do not store, send only the necessary minimum to the LLM.
 - [ ] **Notice-board links:** official notice URLs contain applicants' names in the slug; the digest and the web page link to them as the source.
 - [ ] **Attribution:** NDIC via TamTam (CC BY 4.0, "Zdrojem digitalizovaných informací o silničním provozu je NDIC" (The source of the digitised road traffic information is NDIC)), IPR Praha paid parking zones (ZPS) (CC BY 4.0), PID RSS (CC BY).
-- [ ] **Golemio:** repeating identical calls is prohibited (cache them), the key is non-transferable; verify whether the self-service key sees the `tsk_v2` tariffs (`open_data=false` in the DB).
+- [ ] **Golemio:** the key is non-transferable (relevant if the Parking MCP is hosted for others); repeating identical calls is prohibited, so every call is cached per endpoint TTL in `data/golemio-cache/`. The self-service key sees the `tsk_v2` paid-zone segments and tariffs, but they are `open_data=false` in the DB, so the open-data licence may not cover publishing them.
 
 ## Technical follow-ups from the spikes
 
@@ -32,6 +32,8 @@ The prototype knowingly ignores the terms and robots.txt rules below. Resolve th
 - [ ] **Fixtures:** fixtures (`fixtures/`, gitignored) contain personal names from notice-board titles: sanitize them before committing.
 - [ ] **ČEZ (`api.bezstavy.cz`):** verify the actual data horizon (~14 days observed) and the shape of a cancelled outage (`cancelled_at`).
 - [ ] **Events in Praha 7 via GoOut:** venue pages are rendered in the browser (Playwright), or parse `window.__NUXT__`.
-- [ ] **Golemio tariffs and weekday index:** verify live `/v3/parking-tariffs` prices for P+R Zličín 1 and 2, Nové Butovice, Kotlářka; confirm that index `0` in `/v3/parking/{id}/average-occupancy` is Sunday (inferred from its flat profile, not documented).
+- [ ] **Golemio weekday index:** confirm that index `0` in `/v3/parking/{id}/average-occupancy` is Sunday (inferred from its flat profile, not documented).
+- [ ] **Golemio tariff gaps:** the Praha 7 blue and violet zone tariffs have no charge rows for 06:00–07:59 and none for public holidays, and the orange one none at weekends; the Parking MCP reports these hours as not covered (`estimate`). Check the actual zone rules on the city's paid-parking pages.
+- [ ] **MR Parkit tariffs in Golemio:** hourly prices with a 6 to 12 hour minimum, day and weekend passes; verify what they mean and whether a booking through MR Parkit is needed.
 - [ ] **Notice-board municipality filter:** replace the leading-name heuristic with the list of ORP Kladno municipalities, so that items about another municipality of the ORP are recognised and dropped (the heuristic lets through items such as "Územní plán Kačice").
 - [ ] **Featherless:** `Qwen/Qwen3-30B-A3B-Instruct-2507` (1 concurrency unit, cheapest) returns HTTP 500 `no_response`; re-test if a cheaper model is needed.

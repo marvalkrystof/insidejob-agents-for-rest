@@ -13,7 +13,9 @@
     "check:features": "tsx src/check-features.ts",
     "collect": "tsx src/pipeline/collect.ts",
     "digest": "tsx src/digest/run.ts",
-    "web": "tsx src/web/server.ts"
+    "web": "tsx src/web/server.ts",
+    "mcp": "tsx src/mcp/parking-server.ts",
+    "agent": "tsx src/agent/parking-agent.ts"
   },
   "dependencies": {
     "@langchain/core": "^1.4.0",
