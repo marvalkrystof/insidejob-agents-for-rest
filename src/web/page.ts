@@ -1,6 +1,7 @@
+import { PLAIN_DIGEST_NOTE } from "../digest/render";
 import type { DigestEntry, StoredDigest } from "../digest/schema";
 import { escapeHtml } from "../libs/text.utils";
-import { formatDateTimeLabel, pragueClock } from "../libs/time.utils";
+import { formatDateTimeLabel, pragueClock, relativeDayLabel } from "../libs/time.utils";
 
 const SECONDS_PER_MINUTE = 60;
 
@@ -31,13 +32,19 @@ td { border-top: 1px solid var(--border); padding: 8px 6px; vertical-align: top;
 /** Notice-board titles can contain names of private persons; show the English summary instead when there is one. */
 const displayTitle = (entry: DigestEntry): string => (entry.source === "uredni-deska" && entry.summary ? entry.summary : entry.title);
 
-const renderCommute = ({ commute }: StoredDigest): string => {
+/** The count carries its measurement time: in a digest rendered for another moment (--as-of) it is not "now". */
+const describeMeasuredAt = (updatedAt: string, asOf: string): string => {
+  const measuredAt = new Date(updatedAt);
+  return `${relativeDayLabel(measuredAt, new Date(asOf))} ${pragueClock(measuredAt)}`;
+};
+
+const renderCommute = ({ commute, asOf }: StoredDigest): string => {
   const rows = commute.options
     .map(({ parkAndRide, route, parking }) => {
       const minutes = Math.round(route.travelTimeSeconds / SECONDS_PER_MINUTE);
       const kilometers = (route.lengthMeters / 1000).toFixed(1);
       const spaces = parking
-        ? ` · ${parking.freeNow}/${parking.totalSpots} free now${parking.usualFreeAtArrival === undefined ? "" : `, usually ~${parking.usualFreeAtArrival} free on arrival`}`
+        ? ` · ${parking.freeNow}/${parking.totalSpots} free (${describeMeasuredAt(parking.updatedAt, asOf)})${parking.usualFreeAtArrival === undefined ? "" : `, usually ~${parking.usualFreeAtArrival} free on arrival`}`
         : "";
       return `<li>${escapeHtml(parkAndRide)}: leave <strong>${pragueClock(new Date(route.departureTime))}</strong>, ${minutes} min, ${kilometers} km<span class="muted">${spaces}</span></li>`;
     })
@@ -46,15 +53,18 @@ const renderCommute = ({ commute }: StoredDigest): string => {
 <p class="muted">Usual departure ${pragueClock(new Date(commute.usualDepartureTime))}. Travel times from TomTom.</p><ul>${rows}</ul></div>`;
 };
 
+const renderRefAnchors = (refs: readonly number[]): string =>
+  refs.map((ref) => `<a class="ref" href="#source-${ref}">[${ref}]</a>`).join("");
+
+const renderHeadline = ({ digest, composer }: StoredDigest): string => {
+  const note = composer === "fallback" ? `<p class="muted">${PLAIN_DIGEST_NOTE}</p>` : "";
+  return `<p class="headline">${escapeHtml(digest.headline)}${renderRefAnchors(digest.headlineRefs)}</p>${note}`;
+};
+
 const renderSections = ({ digest }: StoredDigest): string =>
   digest.sections
     .map((section) => {
-      const bullets = section.bullets
-        .map((bullet) => {
-          const refs = bullet.refs.map((ref) => `<a class="ref" href="#source-${ref}">[${ref}]</a>`).join("");
-          return `<li>${escapeHtml(bullet.text)}${refs}</li>`;
-        })
-        .join("");
+      const bullets = section.bullets.map((bullet) => `<li>${escapeHtml(bullet.text)}${renderRefAnchors(bullet.refs)}</li>`).join("");
       return `<section><h2>${escapeHtml(section.title)}</h2><ul>${bullets}</ul></section>`;
     })
     .join("");
@@ -87,7 +97,7 @@ export const renderDigestPage = (stored: StoredDigest, profileName: string): str
 <h1>Domovník</h1>
 <p>${escapeHtml(profileName)} · digest for ${escapeHtml(formatDateTimeLabel(new Date(stored.asOf)))} · ${escapeHtml(stored.model)}</p>
 </header>
-<p class="headline">${escapeHtml(stored.digest.headline)}</p>
+${renderHeadline(stored)}
 ${renderCommute(stored)}
 ${renderSections(stored)}
 ${renderSources(stored)}

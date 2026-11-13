@@ -9,9 +9,10 @@ import { readSeenIds, rememberDelivered } from "../pipeline/novelty";
 import { COMMUTE_FIXTURE_PATH, DIGEST_PATH, FIXTURES_DIR } from "../pipeline/paths";
 import { loadProfile } from "../profile";
 import { commutePlanSchema, planCommute, type CommutePlan } from "../route/commute";
+import type { FactIssue } from "./fact-check";
 import { buildDigestGraph } from "./graph";
 import { renderPlainText, renderTelegramHtml } from "./render";
-import type { StoredDigest } from "./schema";
+import type { DigestComposer, StoredDigest } from "./schema";
 
 const SECONDS_PER_MINUTE = 60;
 const CANDIDATES_SHOWN_PER_TYPE = 6;
@@ -52,6 +53,24 @@ const printCandidates = (candidates: readonly Candidate[]): void => {
   });
 };
 
+const printFactCheck = (composer: DigestComposer, checkIssues: readonly string[], remainingIssues: readonly FactIssue[]): void => {
+  if (composer === "fallback") {
+    console.log("Composer: plain digest without the LLM");
+    return;
+  }
+  if (checkIssues.length === 0) {
+    console.log("Fact check: the draft passed");
+    return;
+  }
+  console.log(`Fact check: ${checkIssues.length} problem(s) in the draft`);
+  checkIssues.forEach((issue) => console.log(`  - ${issue}`));
+  console.log(
+    remainingIssues.length === 0
+      ? "  -> repaired by the LLM"
+      : `  -> ${remainingIssues.length} still failing after the repair, replaced by plain lines`,
+  );
+};
+
 const deliverToTelegram = async (stored: StoredDigest): Promise<boolean> => {
   const botToken = readOptionalEnv("TELEGRAM_BOT_TOKEN");
   const chatId = readOptionalEnv("TELEGRAM_CHAT_ID");
@@ -69,6 +88,8 @@ const main = async (): Promise<void> => {
   const isDryRun = process.argv.includes("--dry-run");
   // Test and demo sends replay the same day; recording them would hide its events and notices from the next send.
   const shouldRemember = !process.argv.includes("--no-remember");
+  // Demo safety and a way to exercise the fallback: the digest is built from the entries without the LLM.
+  const useLlm = !process.argv.includes("--no-llm");
   const isVerbose = process.argv.includes("--verbose");
   const profile = await loadProfile();
   const now = resolveNow();
@@ -89,19 +110,23 @@ const main = async (): Promise<void> => {
   const seenIds = await readSeenIds();
   const startedAt = Date.now();
   const result = await buildDigestGraph().invoke(
-    { profile, commute, candidates, seenIds: [...seenIds], now: toPragueIso(now) },
+    { profile, commute, candidates, seenIds: [...seenIds], now: toPragueIso(now), useLlm },
     { configurable: { thread_id: `digest:${profile.name}` } },
   );
   const stored: StoredDigest = {
     generatedAt: toPragueIso(new Date()),
     asOf: toPragueIso(now),
-    model: resolveFeatherlessModel(),
+    model: result.composer === "llm" ? resolveFeatherlessModel() : "none",
+    composer: result.composer,
+    checkIssues: result.checkIssues,
     commute,
     entries: result.entries,
     digest: result.digest,
   };
   await writeFile(DIGEST_PATH, toPrettyJson(stored));
-  console.log(`\nDigest (${stored.model}, ${Date.now() - startedAt} ms) -> ${DIGEST_PATH}\n`);
+  console.log(`\nDigest (${stored.model}, ${Date.now() - startedAt} ms) -> ${DIGEST_PATH}`);
+  printFactCheck(stored.composer, stored.checkIssues, result.issues);
+  console.log("");
   console.log(renderPlainText(stored));
 
   if (isDryRun) {

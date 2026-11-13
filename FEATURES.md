@@ -17,7 +17,7 @@ The single list of what Domovník does or could do, with the priority and status
 
 | Feature | Priority | Status | Code |
 |---|---|---|---|
-| Headline: one sentence that tells the story of the day, the most important thing first | MVP | partial: the headline cites no entries and is not checked against them | `src/digest/prompts.ts`, `src/digest/graph.ts` |
+| Headline: one sentence that tells the story of the day, the most important thing first, with `[n]` links to the entries it is based on and checked like the bullets | MVP | built | `src/digest/prompts.ts`, `src/digest/fact-check.ts`, `src/digest/render.ts` |
 | A concrete action instead of a list ("Leave at 07:28 for P+R Nové Butovice") | MVP | built | `src/digest/select.ts` |
 | Quiet day: a single sentence, or no message, when nothing matters | V2 | not built | |
 
@@ -28,7 +28,7 @@ The single list of what Domovník does or could do, with the priority and status
 | Closures and roadworks within 300 m of the drive: opravujeme.to (Prague) and KSÚS (Central Bohemian roads) | MVP | built | `src/collectors/opravujeme.ts`, `src/collectors/ksus.ts`, `src/pipeline/filter.ts` |
 | Public transport disruptions on the commuter's lines (metro B and C) and keywords, from the PID RSS | MVP | partial: the feed's start date can disagree with the text (Florenc C: "since 6 Jun 2022", text says 31 Jan 2025) | `src/collectors/pid.ts`, `src/pipeline/filter.ts` |
 | Recommended departure time from the drive time with traffic (TomTom Routing, `arriveAt`), compared with the usual departure | MVP | built | `src/route/tomtom.ts`, `src/route/commute.ts`, `src/digest/select.ts` |
-| P+R choice: the fastest P+R that usually still has at least 15 free spaces at arrival, with the free spaces now (Golemio) | MVP | partial: with `--as-of`, "free now" is the count when the digest runs, not at the as-of time | `src/route/parking.ts`, `src/digest/select.ts` |
+| P+R choice: the fastest P+R that usually still has at least 15 free spaces at arrival, with the free spaces now when the count was measured within 60 minutes of the digest time (Golemio) | MVP | built | `src/route/parking.ts`, `src/digest/select.ts`, `src/web/page.ts` |
 | Parking agent: answers "Where do I park near Holešovice tomorrow at 8 and what will it cost?" through the Parking MCP tools | MVP | not built | `src/agent/parking-agent.ts` |
 | Alternative route or switching to public transport | V2 | not built | |
 | Events at the destination (concert, match) taken into account in traffic and parking estimates | V2 | not built | |
@@ -109,10 +109,10 @@ The single list of what Domovník does or could do, with the priority and status
 | Evening edition for tomorrow, read in bed | idea | not built | |
 | Up to 3 summaries a day (morning, noon, evening) | V2 | not built | |
 | Immediate urgent alert outside the schedule (a disruption on the route 30 minutes before departure) | V2 | not built | |
-| Telegram bot message, every citation a link to its source | MVP | partial: not yet delivered to a chat end to end | `src/delivery/telegram.ts`, `src/digest/render.ts` |
+| Telegram bot message, every citation a link to its source | MVP | built | `src/delivery/telegram.ts`, `src/digest/render.ts` |
 | Web overview: digest, commute options, entries with reason, source and confidence | MVP | built | `yarn web`, `src/web/page.ts` |
 | Novelty: the daily digest skips events and notices it has already delivered | MVP | built | `src/pipeline/novelty.ts`, `src/digest/select.ts` |
-| Test and demo runs: `--dry-run` (no send), `--no-remember` (send without recording novelty), `--as-of` (render a chosen moment), `--offline` (saved fixtures) | MVP | built | `src/digest/run.ts`, `src/pipeline/collect.ts` |
+| Test and demo runs: `--dry-run` (no send), `--no-remember` (send without recording novelty), `--as-of` (render a chosen moment), `--offline` (saved fixtures), `--no-llm` (plain digest without the LLM) | MVP | built | `src/digest/run.ts`, `src/pipeline/collect.ts` |
 | Email | V2 | not built | |
 | iCal feed, push notifications | V3 | not built | |
 
@@ -176,10 +176,11 @@ digest:
 | Duplicate detection | MVP | partial: merges items with the same source id only, not the same event from two sources | `src/pipeline/collect.ts` |
 | Deterministic selection: code picks the entries, the LLM only writes about them | MVP | built | `src/digest/select.ts` |
 | A bullet without a valid citation is dropped | MVP | built | `src/digest/graph.ts` |
-| The LLM gets no free-text Czech details for closures, transit and notices, and no posting dates for notices | MVP | built | `src/digest/graph.ts` |
+| The LLM gets no free-text Czech details for closures, transit and notices, and no posting dates for notices | MVP | built | `src/digest/compose-facts.ts` |
 | Day labels (today, tomorrow, ongoing, date) computed in code, not by the LLM | MVP | built | `src/digest/select.ts`, `src/libs/time.utils.ts` |
-| Fact check: times, dates, prices and counts in a bullet must appear in the entry they belong to, also when a bullet cites several entries with different dates | MVP | not built | |
-| Fallback without the LLM: a plain digest built from the entries when Featherless fails | MVP | not built | |
+| Fact check: every time, date, weekday and number in the headline and bullets must come from the cited entries, "today" and "tomorrow" must match a cited entry's day, and a bullet citing several entries must state each one's own date or time | MVP | partial: wording (e.g. "concert"), spelled-out numbers and dates swapped between entries inside one bullet are not detected | `src/digest/fact-check.ts`, `src/digest/compose-facts.ts` |
+| Self-correction: a failed fact check triggers one LLM repair, and claims that still fail become plain lines built from their entries | MVP | built | `src/digest/graph.ts`, `src/digest/plain-digest.ts` |
+| Fallback without the LLM: a labelled plain digest built from the entries when Featherless fails or with `--no-llm` | MVP | built | `src/digest/plain-digest.ts`, `yarn digest --no-llm` |
 | Feedback (useful, not useful) and relevance learning | V2 | not built | |
 
 ## Privacy

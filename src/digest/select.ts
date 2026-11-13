@@ -7,8 +7,11 @@ import type { CommutePlan } from "../route/commute";
 import type { DigestEntry, DigestSection } from "./schema";
 
 const SECONDS_PER_MINUTE = 60;
+const MS_PER_MINUTE = 60_000;
 const DETAILS_MAX_LENGTH = 220;
 const COMMUTE_ENTRY_REF = 1;
+// A count measured further from the digest time (e.g. a digest rendered --as-of another day) is not "now".
+const FRESH_MEASUREMENT_MINUTES = 60;
 
 export interface NoticeSummary {
   summary: string;
@@ -72,17 +75,21 @@ export const chooseCommuteOption = (commute: CommutePlan): CommuteOption | undef
   return byTravelTime.find(hasRoomAtArrival) ?? byTravelTime[0];
 };
 
-const describeParking = (option: CommuteOption, arrivalClock: string): string | undefined => {
+const isFreshMeasurement = (updatedAt: string, now: Date): boolean =>
+  Math.abs(now.getTime() - new Date(updatedAt).getTime()) <= FRESH_MEASUREMENT_MINUTES * MS_PER_MINUTE;
+
+const describeParking = (option: CommuteOption, arrivalClock: string, now: Date): string | undefined => {
   if (!option.parking) {
     return undefined;
   }
-  const { freeNow, totalSpots, usualFreeAtArrival } = option.parking;
+  const { freeNow, totalSpots, updatedAt, usualFreeAtArrival } = option.parking;
+  const current = isFreshMeasurement(updatedAt, now) ? `${freeNow} of ${totalSpots} spaces free now` : `${totalSpots} spaces`;
   const usual = usualFreeAtArrival === undefined ? "" : `, usually ~${usualFreeAtArrival} free at ${arrivalClock} on this weekday`;
-  return `${freeNow} of ${totalSpots} spaces free now${usual}`;
+  return `${current}${usual}`;
 };
 
-const describeOption = (option: CommuteOption, arrivalClock: string): string => {
-  const parking = describeParking(option, arrivalClock);
+const describeOption = (option: CommuteOption, arrivalClock: string, now: Date): string => {
+  const parking = describeParking(option, arrivalClock, now);
   const drive = `leave ${pragueClock(new Date(option.route.departureTime))} (${toMinutes(option.route.travelTimeSeconds)} min)`;
   return `${option.parkAndRide}: ${drive}${parking ? `, ${parking}` : ""}`;
 };
@@ -99,6 +106,18 @@ const buildDirectionsUrl = (profile: Profile, parkAndRideName: string): string =
 };
 
 const toMinutes = (seconds: number): number => Math.round(seconds / SECONDS_PER_MINUTE);
+
+/** Computed in code from the displayed HH:MM values, so the LLM never does this arithmetic. */
+const describeDepartureComparison = (departure: Date, usualDeparture: Date): string => {
+  const minutesEarlier = Math.floor(usualDeparture.getTime() / MS_PER_MINUTE) - Math.floor(departure.getTime() / MS_PER_MINUTE);
+  const usualClock = pragueClock(usualDeparture);
+  if (minutesEarlier === 0) {
+    return `at your usual ${usualClock}`;
+  }
+  const minutes = Math.abs(minutesEarlier);
+  const amount = `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  return `${amount} ${minutesEarlier > 0 ? "earlier" : "later"} than your usual ${usualClock}`;
+};
 
 const describeDay = (item: Item, now: Date): string | undefined => {
   if (!item.timeRange) {
@@ -120,10 +139,12 @@ const buildCommuteEntry = (profile: Profile, commute: CommutePlan, now: Date): D
     fastest && fastest.parkAndRide !== parkAndRide
       ? `; the faster ${fastest.parkAndRide} usually has only ~${fastest.parking?.usualFreeAtArrival ?? 0} free spaces at ${arrivalClock}`
       : "";
-  const chosenParking = describeParking(chosen, arrivalClock);
+  const chosenParking = describeParking(chosen, arrivalClock, now);
   const alternatives = commute.options
     .filter((option) => option.parkAndRide !== parkAndRide)
-    .map((option) => `alternative ${describeOption(option, arrivalClock)}`);
+    .map((option) => `alternative ${describeOption(option, arrivalClock, now)}`);
+  const departure = new Date(route.departureTime);
+  const comparison = describeDepartureComparison(departure, new Date(commute.usualDepartureTime));
   return {
     ref: COMMUTE_ENTRY_REF,
     section: "commute",
@@ -131,7 +152,7 @@ const buildCommuteEntry = (profile: Profile, commute: CommutePlan, now: Date): D
     title: `Drive to ${parkAndRide}`,
     day: relativeDayLabel(new Date(route.departureTime), now),
     when: formatTimeRange(route.departureTime, route.arrivalTime, now),
-    reason: `Leave at ${pragueClock(new Date(route.departureTime))} to reach ${parkAndRide} by ${arrivalClock}; your usual departure is ${pragueClock(new Date(commute.usualDepartureTime))}${skippedFastest}`,
+    reason: `Leave at ${pragueClock(departure)} to reach ${parkAndRide} by ${arrivalClock}, ${comparison}${skippedFastest}`,
     details: [
       `${toMinutes(route.travelTimeSeconds)} min, ${(route.lengthMeters / 1000).toFixed(1)} km, traffic delay ${toMinutes(route.trafficDelaySeconds)} min`,
       ...(chosenParking ? [`${parkAndRide} ${chosenParking}`] : []),

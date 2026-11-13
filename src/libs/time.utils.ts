@@ -93,11 +93,11 @@ export const atPragueClock = (date: Date, clock: string): Date => parsePragueWal
 
 const pragueYear = (date: Date): string => pragueToday(date).slice(0, 4);
 
-/** "Mon 16 Nov", with the year only when it differs from `now`. */
+/** "Mon, 16 Nov", with the year only when it differs from `now`. */
 const formatDayLabel = (date: Date, now: Date): string =>
   pragueYear(date) === pragueYear(now) ? dayLabelFormatter.format(date) : dayLabelWithYearFormatter.format(date);
 
-/** "Mon 16 Nov 2026, 06:30" in Prague. */
+/** "Mon, 16 Nov 2026, 06:30" in Prague. */
 export const formatDateTimeLabel = (date: Date): string => `${dayLabelWithYearFormatter.format(date)}, ${pragueClock(date)}`;
 
 /** Computed in code so the LLM never has to guess what "today" is. */
@@ -112,7 +112,7 @@ export const relativeDayLabel = (date: Date, now: Date): string => {
   return formatDayLabel(date, now);
 };
 
-/** Human label for a time range in Prague, e.g. "Mon 16 Nov, 11:30–15:00", "until Mon 30 Nov" or "since Fri 31 Jan 2025". */
+/** Human label for a time range in Prague, e.g. "Mon, 16 Nov, 11:30–15:00", "until Mon, 30 Nov" or "since Fri, 31 Jan 2025". */
 export const formatTimeRange = (fromIso: string, toIso: string | undefined, now: Date): string => {
   const from = new Date(fromIso);
   const fromLabel = `${formatDayLabel(from, now)}, ${pragueClock(from)}`;
